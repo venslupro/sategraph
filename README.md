@@ -43,9 +43,9 @@ Design decisions worth knowing:
 - **Compute stays close to the user.** Workers only move bytes; the browser runs
   SGP4 with `satellite.js` and derives display positions.
 - **Storage is specialised.** KV holds orbit bundles and read models, D1 holds
-  the search projection, events and agent runs, Neo4j is the optional graph
-  backend, and Backblaze B2 keeps snapshots and backups. Cache API plus an
-  in-memory LRU absorb repeated reads.
+  the search projection, events and agent runs, Neo4j is the graph store
+  (nodes and relations), and Backblaze B2 keeps snapshots and backups. Cache
+  API plus an in-memory LRU absorb repeated reads.
 - **OMM replaces TLE at the edge.** `satellite.js` v5 has no `json2satrec`, so
   OMM records are converted to TLE lines before `twoline2satrec`.
 - **The assistant always answers.** Workers AI is used when available, a BYOK
@@ -123,15 +123,37 @@ TURNSTILE_SECRET=...
 ADMIN_TOKEN=...              # protects the scheduler run endpoints
 ```
 
-Secrets are never committed. Neo4j AuraDB, Backblaze B2 and a BYOK model are all
-optional; the platform degrades to D1, KV and the offline assistant.
+Secrets are never committed. Neo4j AuraDB is the graph store in production;
+Backblaze B2 and a BYOK model are optional. Without Neo4j secrets the API
+degrades to the bundled seed graph, while catalog search, events and read
+models keep working from D1 and KV.
+
+## Graph store (Neo4j)
+
+Graph data — satellites, constellations, organizations, launches, buses and
+all relations — lives in Neo4j, never in D1. The scheduler's graph-refresh
+workflow MERGEs every snapshot into Neo4j tagged with its `graphVersion` and
+deletes stale nodes and relationships afterwards, so a failed publication
+leaves the previous version readable.
+
+Point the platform at an AuraDB (or any Neo4j Query API v2 endpoint) with
+secrets on both the Pages project and the scheduler worker:
+
+```bash
+npx wrangler pages secret put NEO4J_HTTP_URL --project-name satgraph
+npx wrangler pages secret put NEO4J_USER --project-name satgraph
+npx wrangler pages secret put NEO4J_PASSWORD --project-name satgraph
+npx wrangler secret put NEO4J_HTTP_URL --config apps/scheduler/wrangler.toml
+npx wrangler secret put NEO4J_USER --config apps/scheduler/wrangler.toml
+npx wrangler secret put NEO4J_PASSWORD --config apps/scheduler/wrangler.toml
+# NEO4J_DATABASE is optional and defaults to "neo4j".
+```
 
 ## Database
 
 `db/migrations/0001_init.sql` creates the D1 read projection:
 
 - `satellite_search` – one row per satellite, including the full catalog entry
-- `relation_edge` – one row per relation, keyed by type and endpoints
 - `domain_event` – recent graph/ops events
 - `agent_run` – assistant runs for auditing and shares
 - `alert` – source health and data-quality alerts

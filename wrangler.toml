@@ -20,7 +20,7 @@ database_id = "REPLACE_WITH_D1_DATABASE_ID" # terraform output d1_database_id
 binding = "AI"
 
 [vars]
-GRAPH_BACKEND = "d1"
+GRAPH_BACKEND = "neo4j"
 AGENT_MODE = "workers-ai"
 AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
 PUBLIC_ORIGIN = "https://satgraph.pages.dev"

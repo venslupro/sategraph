@@ -1,7 +1,7 @@
 /**
  * Generates `db/migrations/0002_seed.sql` from the deterministic seed snapshot.
- * The migration only touches the D1 read projection, which is what the API
- * falls back to when Neo4j is unavailable.
+ * The migration only touches the D1 search projection and event log; graph
+ * data is published to Neo4j by the scheduler.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -30,7 +30,6 @@ const statements: string[] = [
   `-- Snapshot ${snapshot.graphVersion} / orbits ${snapshot.orbitVersion}.`,
   '',
   'DELETE FROM satellite_search;',
-  'DELETE FROM relation_edge;',
   'DELETE FROM domain_event;',
   '',
 ];
@@ -54,32 +53,6 @@ for (const entry of models.catalog) {
         text(entry.constellationName),
         text(entry.orbitClass),
         json(entry),
-      ].join(',\n       '),
-      ');',
-      '',
-    ].join('\n'),
-  );
-}
-
-for (const relation of models.relations) {
-  const layerId =
-    models.catalog.find(
-      (entry) => entry.id === relation.from.id || entry.id === relation.to.id,
-    )?.layerId ?? null;
-  statements.push(
-    [
-      'INSERT INTO relation_edge',
-      '  (id, type, from_id, to_id, confidence, method, layer_id, data_json)',
-      'VALUES (',
-      [
-        text(relation.id),
-        text(relation.type),
-        text(relation.from.id),
-        text(relation.to.id),
-        text(relation.confidence),
-        text(relation.method),
-        text(layerId),
-        json(relation),
       ].join(',\n       '),
       ');',
       '',
@@ -113,5 +86,5 @@ mkdirSync(dirname(OUTPUT), { recursive: true });
 writeFileSync(OUTPUT, `${statements.join('\n')}\n`, 'utf8');
 process.stdout.write(
   `Wrote ${OUTPUT}: ${models.catalog.length} satellites, ` +
-    `${models.relations.length} relations, ${models.events.length} events.\n`,
+    `${models.events.length} events.\n`,
 );

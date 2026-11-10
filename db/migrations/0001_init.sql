@@ -1,4 +1,5 @@
--- SatGraph D1 schema: query projection, event log, agent analytics, alerts.
+-- SatGraph D1 schema: search projection, event log, agent analytics, alerts.
+-- Graph data lives in Neo4j; D1 never stores relations.
 -- Write-side tables are populated by workflows; user requests never write.
 
 CREATE TABLE IF NOT EXISTS satellite_search (
@@ -20,23 +21,6 @@ CREATE INDEX IF NOT EXISTS idx_satellite_search_name ON satellite_search (name);
 CREATE INDEX IF NOT EXISTS idx_satellite_search_norad ON satellite_search (norad_id);
 CREATE INDEX IF NOT EXISTS idx_satellite_search_layer ON satellite_search (layer_id);
 CREATE INDEX IF NOT EXISTS idx_satellite_search_status ON satellite_search (status);
-
-CREATE TABLE IF NOT EXISTS relation_edge (
-  id TEXT PRIMARY KEY,
-  type TEXT NOT NULL,
-  from_id TEXT NOT NULL,
-  to_id TEXT NOT NULL,
-  confidence TEXT NOT NULL,
-  method TEXT NOT NULL,
-  layer_id TEXT,
-  data_json TEXT NOT NULL,
-  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_relation_edge_from ON relation_edge (from_id);
-CREATE INDEX IF NOT EXISTS idx_relation_edge_to ON relation_edge (to_id);
-CREATE INDEX IF NOT EXISTS idx_relation_edge_type ON relation_edge (type);
-CREATE INDEX IF NOT EXISTS idx_relation_edge_confidence ON relation_edge (confidence);
 
 CREATE TABLE IF NOT EXISTS domain_event (
   id TEXT PRIMARY KEY,

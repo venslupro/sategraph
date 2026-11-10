@@ -10,7 +10,6 @@ import type {
 import {
   D1CatalogReader,
   D1EventReader,
-  D1GraphRepository,
   KvReadModelStore,
   KvShareStore,
   MemoryShareStore,
@@ -98,9 +97,6 @@ export async function createServices(env: Env): Promise<Services> {
     });
     graph = new Neo4jGraphRepository(client);
     graphMode = 'neo4j';
-  } else if (env.SATGRAPH_DB) {
-    graph = new D1GraphRepository(env.SATGRAPH_DB);
-    graphMode = 'd1';
   }
 
   const catalog: CatalogReader = env.SATGRAPH_DB

@@ -36,7 +36,7 @@ crons = [
 ]
 
 [vars]
-GRAPH_BACKEND = "d1"
+GRAPH_BACKEND = "neo4j"
 AGENT_MODE = "workers-ai"
 
 # Optional secrets (set with `wrangler secret put`):

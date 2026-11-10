@@ -1,14 +1,14 @@
 /**
  * Graph publication. The graph is rebuilt from the curated seed catalog and the
- * latest published orbit elements, then projected into KV read models and the
- * D1 search projection. Publication is idempotent and versioned; a failed run
- * leaves the previous version in place.
+ * latest published orbit elements, written to Neo4j (the graph store), then
+ * projected into KV read models and the D1 search projection. Publication is
+ * idempotent and versioned; a failed run leaves the previous version in place.
  */
 import type { GraphSnapshot } from '@satgraph/publishing';
 import { buildReadModels, buildSeedSnapshot, readModelEntries } from '@satgraph/publishing';
 import type { Manifest } from '@satgraph/contracts';
 import type { SchedulerBindings } from '../services';
-import { blobStore, publishToD1, readModelStore } from '../services';
+import { blobStore, neo4jClient, publishToD1, publishToNeo4j, readModelStore } from '../services';
 
 const HASH_KEY = 'state:graph-hash';
 const HISTORY_KEY = 'history:snapshots';
@@ -114,6 +114,11 @@ export async function publishSnapshot(
 
   const entries = readModelEntries(snapshot, modes);
   await store.putMany(entries);
+
+  const neo4j = neo4jClient(env);
+  if (neo4j) {
+    await publishToNeo4j(neo4j, snapshot);
+  }
 
   if (env.SATGRAPH_DB) {
     await publishToD1(env.SATGRAPH_DB, buildReadModels(snapshot));
