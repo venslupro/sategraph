@@ -128,6 +128,23 @@ Backblaze B2 and a BYOK model are optional. Without Neo4j secrets the API
 degrades to the bundled seed graph, while catalog search, events and read
 models keep working from D1 and KV.
 
+## Agent resources
+
+The assistant runs on Workers AI, which is an account capability — there is
+nothing to provision; the `[ai]` binding in both wrangler files is enough.
+The only agent-related Cloudflare resource is the Turnstile widget that
+protects `POST /api/v1/agent/chat` from abuse, and Terraform creates it
+(`cloudflare_turnstile_widget.agent`). After `terraform apply`:
+
+```bash
+terraform -chdir=terraform output turnstile_sitekey          # render in the web app if you add the widget
+npx wrangler pages secret put TURNSTILE_SECRET --project-name satgraph
+# paste the value of: terraform -chdir=terraform output -raw turnstile_secret
+```
+
+Without `TURNSTILE_SECRET` the endpoint stays open and relies on rate
+limiting only.
+
 ## Graph store (Neo4j)
 
 Graph data — satellites, constellations, organizations, launches, buses and

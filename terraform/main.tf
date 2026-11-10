@@ -34,3 +34,14 @@ resource "cloudflare_workers_kv_namespace" "satgraph" {
   account_id = var.cloudflare_account_id
   title      = "satgraph-kv"
 }
+
+# Protects POST /api/v1/agent/chat from abuse. The API verifies the token with
+# the widget secret (TURNSTILE_SECRET); Workers AI itself needs no resource —
+# it is an account capability bound through the [ai] wrangler binding.
+resource "cloudflare_turnstile_widget" "agent" {
+  account_id = var.cloudflare_account_id
+  name       = "satgraph-agent"
+  domains    = ["satgraph.pages.dev"]
+  mode       = "managed"
+  region     = "world"
+}
