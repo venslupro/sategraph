@@ -2,18 +2,16 @@
 #
 # Only the data resources live here; the scheduler Worker and the Pages site
 # are deployed by the CD pipeline with wrangler. There is a single production
-# environment, so this root module is applied once.
+# environment, so this root module is applied once by the terraform pipeline.
 #
-# Usage:
-#   export CLOUDFLARE_API_TOKEN=...        # token with D1 + KV edit rights
-#   terraform init
-#   terraform apply -var="cloudflare_account_id=<account id>"
-#
-# Afterwards copy `terraform output` values into wrangler.toml and
-# apps/scheduler/wrangler.toml.
+# State lives in an R2 bucket created once as a bootstrap step; the CD
+# pipeline resolves the resource IDs from the Cloudflare API, so no manual
+# copy of the outputs into wrangler.toml is needed.
 
 terraform {
   required_version = ">= 1.6"
+
+  backend "s3" {}
 
   required_providers {
     cloudflare = {

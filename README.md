@@ -174,29 +174,34 @@ All responses are `{ data, meta }` envelopes with `graphVersion`,
 
 ## Deployment (Cloudflare free plan)
 
-There is a single production environment. Data resources (D1, KV) are
-provisioned with Terraform; the scheduler Worker and the Pages site are
-deployed by the CD pipeline with wrangler.
+There is a single production environment, and three pipelines in
+`.github/workflows/` own the whole lifecycle:
 
-1. Provision the data resources with Terraform:
+| Pipeline | Trigger | Responsibility |
+| --- | --- | --- |
+| `ci.yml` | push and pull request | `npm ci`, typecheck, unit tests, web build |
+| `terraform.yml` | `terraform/**` changes on `main`, or manual dispatch | creates every Cloudflare resource except the Worker and Pages project (D1 database, KV namespace) |
+| `cd.yml` | after CI succeeds on `main`, or manual dispatch | database initialization, backend worker deploy, frontend and Pages Functions deploy |
 
-   ```bash
-   export CLOUDFLARE_API_TOKEN=...   # token with D1 + KV edit rights
-   terraform -chdir=terraform init
-   terraform -chdir=terraform apply -var="cloudflare_account_id=<account id>"
-   terraform -chdir=terraform output
-   ```
+### Repository configuration
 
-2. Paste `d1_database_id` and `kv_namespace_id` into `wrangler.toml` and
-   `apps/scheduler/wrangler.toml` (both are marked with `# terraform output`).
+Secrets:
 
-3. Seed the remote database once:
+- `CLOUDFLARE_API_TOKEN` — token with D1 and KV edit rights.
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID.
+- `R2_STATE_ACCESS_KEY_ID` / `R2_STATE_SECRET_ACCESS_KEY` — S3 keys for the
+  Terraform state bucket.
 
-   ```bash
-   npm run db:seed:remote
-   ```
+Variables: `R2_STATE_BUCKET` and `R2_STATE_ENDPOINT`
+(`https://<account id>.r2.cloudflarestorage.com`).
 
-4. Add optional secrets:
+### Bootstrap (once)
+
+1. Create the R2 bucket that stores Terraform state (Terraform cannot create
+   the bucket that holds its own state).
+2. Run the `terraform` pipeline; it applies the D1 database and the KV
+   namespace. Outputs are printed in the job summary.
+3. Add the optional runtime secrets:
 
    ```bash
    npx wrangler pages secret put NEO4J_PASSWORD --project-name satgraph
@@ -204,16 +209,14 @@ deployed by the CD pipeline with wrangler.
    npx wrangler secret put ADMIN_TOKEN --config apps/scheduler/wrangler.toml
    ```
 
-5. Pipelines (`.github/workflows/`):
-   - `ci.yml` runs on every push and pull request: install, typecheck, unit
-     tests and the web build.
-   - `cd.yml` deploys to production after CI succeeds on `main`: D1
-     migrations, `wrangler deploy` for the scheduler worker and
-     `wrangler pages deploy` for the site. It needs the
-     `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets.
+After that every merge to `main` goes CI → CD. The CD pipeline resolves the
+D1 and KV identifiers from the Cloudflare API and injects them into both
+`wrangler.toml` files, then applies the schema, seeds the database only when
+it is empty, deploys the scheduler worker and finally the Pages site (static
+assets plus `functions/api/[[path]].ts`).
 
-   Manual deploy is still possible with `npm run deploy` (Pages) and
-   `npm run deploy:scheduler` (worker).
+Manual deploy is still possible with `npm run deploy` (Pages) and
+`npm run deploy:scheduler` (worker) after filling the binding IDs.
 
 The scheduler runs three crons: orbit refresh every 2 hours, graph publication
 every 48 hours, and a weekly backup. It exposes `/health`, `POST /run/orbit`,
