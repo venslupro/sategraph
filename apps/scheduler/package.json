@@ -1,0 +1,15 @@
+{
+  "name": "@satgraph/scheduler",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@satgraph/contracts": "1.0.0",
+    "@satgraph/graph": "1.0.0",
+    "@satgraph/infra": "1.0.0",
+    "@satgraph/orbit": "1.0.0",
+    "@satgraph/publishing": "1.0.0",
+    "@satgraph/shared-kernel": "1.0.0"
+  }
+}

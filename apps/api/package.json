@@ -1,0 +1,22 @@
+{
+  "name": "@satgraph/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/dev-server.ts",
+    "typecheck": "tsc -p ../../tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@satgraph/catalog": "1.0.0",
+    "@satgraph/contracts": "1.0.0",
+    "@satgraph/graph": "1.0.0",
+    "@satgraph/infra": "1.0.0",
+    "@satgraph/orbit": "1.0.0",
+    "@satgraph/publishing": "1.0.0",
+    "@satgraph/shared-kernel": "1.0.0",
+    "hono": "^4.7.0",
+    "zod": "^3.24.1"
+  }
+}

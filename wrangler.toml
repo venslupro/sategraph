@@ -1,0 +1,32 @@
+# Cloudflare Pages configuration for the SatGraph front end.
+# Data bindings are shared by the Pages Functions API and the scheduler worker.
+# D1 and KV are provisioned by terraform/ (single production environment);
+# paste the `terraform output` values into the two identifiers below.
+name = "satgraph"
+compatibility_date = "2025-11-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "apps/web/dist"
+
+[[kv_namespaces]]
+binding = "SATGRAPH_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID" # terraform output kv_namespace_id
+
+[[d1_databases]]
+binding = "SATGRAPH_DB"
+database_name = "satgraph"
+database_id = "REPLACE_WITH_D1_DATABASE_ID" # terraform output d1_database_id
+
+[ai]
+binding = "AI"
+
+[vars]
+GRAPH_BACKEND = "d1"
+AGENT_MODE = "workers-ai"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+PUBLIC_ORIGIN = "https://satgraph.pages.dev"
+
+# Optional secrets (set with `wrangler pages secret put NAME --project-name satgraph`):
+# NEO4J_HTTP_URL, NEO4J_DATABASE, NEO4J_USER, NEO4J_PASSWORD
+# B2_ENDPOINT, B2_BUCKET, B2_KEY_ID, B2_APP_KEY, B2_REGION
+# BYOK_BASE_URL, BYOK_API_KEY, BYOK_MODEL
+# TURNSTILE_SECRET

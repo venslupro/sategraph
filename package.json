@@ -1,0 +1,44 @@
+{
+  "name": "satgraph",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SatGraph - public satellite knowledge graph platform",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev --workspace @satgraph/api",
+    "dev:web": "npm run dev --workspace @satgraph/web",
+    "build": "npm run build --workspace @satgraph/web",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate:local": "wrangler d1 execute satgraph --local --file=./db/migrations/0001_init.sql",
+    "db:seed:build": "tsx scripts/build-seed-sql.ts",
+    "db:seed:local": "npm run db:seed:build && wrangler d1 execute satgraph --local --file=./db/migrations/0002_seed.sql",
+    "db:setup:local": "npm run db:migrate:local && npm run db:seed:local",
+    "db:migrate:remote": "wrangler d1 execute satgraph --remote --file=./db/migrations/0001_init.sql",
+    "db:seed:remote": "npm run db:seed:build && wrangler d1 execute satgraph --remote --file=./db/migrations/0002_seed.sql",
+    "deploy": "npm run build && wrangler pages deploy apps/web/dist --project-name satgraph",
+    "deploy:scheduler": "wrangler deploy --config apps/scheduler/wrangler.toml"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261109.1",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/cytoscape": "^3.21.9",
+    "@types/three": "^0.180.0",
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}
