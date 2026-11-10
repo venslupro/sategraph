@@ -1,8 +1,9 @@
 name: ci
 
+# CI runs on every branch and every pull request; it has no environment.
+
 on:
   push:
-    branches: [main]
   pull_request:
 
 jobs:

@@ -179,9 +179,13 @@ There is a single production environment, and three pipelines in
 
 | Pipeline | Trigger | Responsibility |
 | --- | --- | --- |
-| `ci.yml` | push and pull request | `npm ci`, typecheck, unit tests, web build |
-| `terraform.yml` | `terraform/**` changes on `main`, or manual dispatch | creates every Cloudflare resource except the Worker and Pages project (D1 database, KV namespace) |
-| `cd.yml` | after CI succeeds on `main`, or manual dispatch | database initialization, backend worker deploy, frontend and Pages Functions deploy |
+| `ci.yml` | push and pull request on **any branch** | `npm ci`, typecheck, unit tests, web build |
+| `terraform.yml` | `terraform/**` changes, or manual dispatch | plan runs anywhere; **apply only on `main`** in the `production` environment (D1 database, KV namespace) |
+| `cd.yml` | after CI succeeds on `main`, or manual dispatch **from `main` only** | database initialization, backend worker deploy, frontend and Pages Functions deploy, all in the `production` environment |
+
+Only the `main` branch can run `terraform apply` or deploy services; both are
+gated by the `production` GitHub environment, and dispatches from other
+branches skip those jobs entirely.
 
 ### Repository configuration
 

@@ -3,6 +3,9 @@ name: cd
 # Deploys both services to the single production environment and initializes
 # the database. The terraform pipeline owns D1 + KV; this pipeline resolves
 # their IDs from the Cloudflare API and injects them into wrangler.toml.
+#
+# Only the main branch may deploy: the workflow_run trigger is limited to
+# main, and a manual dispatch from any other branch skips the deploy job.
 
 on:
   workflow_run:
@@ -17,7 +20,11 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      (github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' &&
+        github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     environment: production
     env:

@@ -2,7 +2,10 @@ name: terraform
 
 # Provisions every Cloudflare resource except the scheduler Worker and the
 # Pages project (those are deployed by the cd pipeline with wrangler).
-# Single environment: production.
+#
+# Plan runs everywhere (any branch, any PR, no environment). Apply only runs
+# on the main branch in the production environment; pushes or dispatches from
+# any other branch skip the apply job entirely.
 #
 # Required repository configuration:
 #   secrets.CLOUDFLARE_API_TOKEN       token allowed to edit D1 + KV
@@ -14,7 +17,6 @@ name: terraform
 
 on:
   push:
-    branches: [main]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
@@ -35,9 +37,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  terraform:
+  plan:
+    # Any branch, any PR: read-only plan, no environment.
     runs-on: ubuntu-latest
-    environment: production
     defaults:
       run:
         working-directory: terraform
@@ -74,12 +76,48 @@ jobs:
       - name: Plan
         run: |
           terraform plan \
-            -var="cloudflare_account_id=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" \
-            -out=tfplan
+            -var="cloudflare_account_id=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+  apply:
+    # Only the main branch may touch the production environment.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+        (github.event_name == 'workflow_dispatch' && inputs.action == 'apply'))
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: terraform
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_STATE_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_STATE_SECRET_ACCESS_KEY }}
+      TF_IN_AUTOMATION: '1'
+      TF_INPUT: '0'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.R2_STATE_BUCKET }}" \
+            -backend-config="key=satgraph/production.tfstate" \
+            -backend-config="endpoint=${{ vars.R2_STATE_ENDPOINT }}" \
+            -backend-config="region=auto" \
+            -backend-config="skip_credentials_validation=true" \
+            -backend-config="skip_region_validation=true" \
+            -backend-config="skip_requesting_account_id=true"
 
       - name: Apply
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
-        run: terraform apply -auto-approve tfplan
+        run: |
+          terraform apply -auto-approve \
+            -var="cloudflare_account_id=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
 
       - name: Summary
         if: always()
