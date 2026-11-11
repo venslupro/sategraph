@@ -4,9 +4,9 @@
  * projected into KV read models and the D1 search projection. Publication is
  * idempotent and versioned; a failed run leaves the previous version in place.
  */
-import type { GraphSnapshot } from '@satgraph/publishing';
-import { buildReadModels, buildSeedSnapshot, readModelEntries } from '@satgraph/publishing';
-import type { Manifest } from '@satgraph/contracts';
+import type { GraphSnapshot } from '@sategraph/publishing';
+import { buildReadModels, buildSeedSnapshot, readModelEntries } from '@sategraph/publishing';
+import type { Manifest } from '@sategraph/contracts';
 import type { SchedulerBindings } from '../services';
 import { blobStore, neo4jClient, publishToD1, publishToNeo4j, readModelStore } from '../services';
 
@@ -120,8 +120,8 @@ export async function publishSnapshot(
     await publishToNeo4j(neo4j, snapshot);
   }
 
-  if (env.SATGRAPH_DB) {
-    await publishToD1(env.SATGRAPH_DB, buildReadModels(snapshot));
+  if (env.SATEGRAPH_DB) {
+    await publishToD1(env.SATEGRAPH_DB, buildReadModels(snapshot));
   }
 
   await store.put(HASH_KEY, contentHash(

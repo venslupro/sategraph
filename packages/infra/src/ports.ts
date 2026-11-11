@@ -2,7 +2,7 @@
 import type {
   CatalogEntry,
   DomainEventView,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 
 export interface EventReader {
   list(sinceHours: number, limit: number): Promise<DomainEventView[]>;

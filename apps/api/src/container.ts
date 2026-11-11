@@ -2,11 +2,11 @@
  * Application service container. It selects adapters from bindings and exposes
  * version-aware read-model access with a seed fallback.
  */
-import type { CatalogReader } from '@satgraph/catalog';
+import type { CatalogReader } from '@sategraph/catalog';
 import type {
   EventReader,
   ShareStore,
-} from '@satgraph/infra';
+} from '@sategraph/infra';
 import {
   D1CatalogReader,
   D1EventReader,
@@ -19,8 +19,8 @@ import {
   createLlmProvider,
   createSeedRuntime,
   type SeedRuntime,
-} from '@satgraph/infra';
-import type { GraphReadPort } from '@satgraph/graph';
+} from '@sategraph/infra';
+import type { GraphReadPort } from '@sategraph/graph';
 import type {
   Constellation,
   DomainEventView,
@@ -29,11 +29,11 @@ import type {
   Link,
   Manifest,
   SatelliteDetail,
-} from '@satgraph/contracts';
-import { buildManifest, readModelKeys } from '@satgraph/publishing';
-import type { Env } from '@satgraph/infra';
-import type { LlmProvider } from '@satgraph/infra';
-import { satelliteShard } from '@satgraph/publishing';
+} from '@sategraph/contracts';
+import { buildManifest, readModelKeys } from '@sategraph/publishing';
+import type { Env } from '@sategraph/infra';
+import type { LlmProvider } from '@sategraph/infra';
+import { satelliteShard } from '@sategraph/publishing';
 
 export interface VersionInfo {
   graphVersion: string;
@@ -78,8 +78,8 @@ export async function createServices(env: Env): Promise<Services> {
   const llm = createLlmProvider(env);
   const seed = await seedRuntime({ graph: 'seed', agent: llm.mode });
 
-  const readModels = env.SATGRAPH_KV
-    ? new KvReadModelStore(env.SATGRAPH_KV)
+  const readModels = env.SATEGRAPH_KV
+    ? new KvReadModelStore(env.SATEGRAPH_KV)
     : seed.readModels;
 
   let graphMode: Services['graphMode'] = 'seed';
@@ -99,14 +99,14 @@ export async function createServices(env: Env): Promise<Services> {
     graphMode = 'neo4j';
   }
 
-  const catalog: CatalogReader = env.SATGRAPH_DB
-    ? new D1CatalogReader(env.SATGRAPH_DB)
+  const catalog: CatalogReader = env.SATEGRAPH_DB
+    ? new D1CatalogReader(env.SATEGRAPH_DB)
     : seed.catalog;
-  const events: EventReader = env.SATGRAPH_DB
-    ? new D1EventReader(env.SATGRAPH_DB)
+  const events: EventReader = env.SATEGRAPH_DB
+    ? new D1EventReader(env.SATEGRAPH_DB)
     : seed.events;
-  const shares: ShareStore = env.SATGRAPH_KV
-    ? new KvShareStore(env.SATGRAPH_KV)
+  const shares: ShareStore = env.SATEGRAPH_KV
+    ? new KvShareStore(env.SATEGRAPH_KV)
     : new MemoryShareStore();
 
   const services: Services = {

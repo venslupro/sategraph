@@ -46,10 +46,10 @@ jobs:
       - name: Resolve terraform-managed bindings
         run: |
           set -euo pipefail
-          d1_id=$(npx wrangler d1 list --json | jq -r '[.[] | select(.name == "satgraph")][0] | (.uuid // .id) // empty')
-          kv_id=$(npx wrangler kv namespace list --json | jq -r '[.[] | select(.title == "satgraph-kv")][0].id // empty')
+          d1_id=$(npx wrangler d1 list --json | jq -r '[.[] | select(.name == "sategraph")][0] | (.uuid // .id) // empty')
+          kv_id=$(npx wrangler kv namespace list --json | jq -r '[.[] | select(.title == "sategraph-kv")][0].id // empty')
           if [ -z "$d1_id" ] || [ -z "$kv_id" ]; then
-            echo "::error::D1 database 'satgraph' or KV namespace 'satgraph-kv' is missing. Run the terraform pipeline first."
+            echo "::error::D1 database 'sategraph' or KV namespace 'sategraph-kv' is missing. Run the terraform pipeline first."
             exit 1
           fi
           sed -i "s/REPLACE_WITH_D1_DATABASE_ID/${d1_id}/" wrangler.toml apps/scheduler/wrangler.toml
@@ -64,7 +64,7 @@ jobs:
         run: |
           set -euo pipefail
           npm run db:migrate:remote
-          rows=$(npx wrangler d1 execute satgraph --remote --json \
+          rows=$(npx wrangler d1 execute sategraph --remote --json \
             --command "SELECT COUNT(*) AS total FROM satellite_search" \
             | jq -r '.[0].results[0].total')
           if [ "$rows" -eq 0 ]; then
@@ -78,4 +78,4 @@ jobs:
         run: npm run deploy:scheduler
 
       - name: Deploy frontend and API (Pages Functions)
-        run: npx wrangler pages deploy apps/web/dist --project-name satgraph --branch main
+        run: npx wrangler pages deploy apps/web/dist --project-name sategraph --branch main

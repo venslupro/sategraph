@@ -10,17 +10,17 @@ import type {
   Link,
   Relation,
   SourceHealth,
-} from '@satgraph/contracts';
-import { relationKey, toIsoUtc } from '@satgraph/shared-kernel';
-import { computeOrbitSummary, toSatrecJson } from '@satgraph/orbit';
-import { Constellation as ConstellationAggregate } from '@satgraph/graph';
-import type { ConstellationMember } from '@satgraph/graph';
+} from '@sategraph/contracts';
+import { relationKey, toIsoUtc } from '@sategraph/shared-kernel';
+import { computeOrbitSummary, toSatrecJson } from '@sategraph/orbit';
+import { Constellation as ConstellationAggregate } from '@sategraph/graph';
+import type { ConstellationMember } from '@sategraph/graph';
 import {
   evaluateRules,
   type CuratedRelay,
   type RuleContext,
   type RuleSatellite,
-} from '@satgraph/graph';
+} from '@sategraph/graph';
 import type { GraphSnapshot, SnapshotSatellite } from '../model';
 import {
   buildSeedDataset,

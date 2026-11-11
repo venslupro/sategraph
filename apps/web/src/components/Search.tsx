@@ -1,7 +1,7 @@
 /** Global search over the catalog, backed by MiniSearch in the browser. */
 import MiniSearch from 'minisearch';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CatalogEntry } from '@satgraph/contracts';
+import type { CatalogEntry } from '@sategraph/contracts';
 
 interface SearchProps {
   catalog: CatalogEntry[];

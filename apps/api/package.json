@@ -1,5 +1,5 @@
 {
-  "name": "@satgraph/api",
+  "name": "@sategraph/api",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -9,13 +9,13 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
-    "@satgraph/catalog": "1.0.0",
-    "@satgraph/contracts": "1.0.0",
-    "@satgraph/graph": "1.0.0",
-    "@satgraph/infra": "1.0.0",
-    "@satgraph/orbit": "1.0.0",
-    "@satgraph/publishing": "1.0.0",
-    "@satgraph/shared-kernel": "1.0.0",
+    "@sategraph/catalog": "1.0.0",
+    "@sategraph/contracts": "1.0.0",
+    "@sategraph/graph": "1.0.0",
+    "@sategraph/infra": "1.0.0",
+    "@sategraph/orbit": "1.0.0",
+    "@sategraph/publishing": "1.0.0",
+    "@sategraph/shared-kernel": "1.0.0",
     "hono": "^4.7.0",
     "zod": "^3.24.1"
   }

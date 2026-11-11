@@ -3,15 +3,15 @@
  * ports the Cloudflare adapters implement. Used by local development, tests and
  * the deployed fallback when KV/D1 are empty.
  */
-import type { CatalogReader } from '@satgraph/catalog';
-import type { GraphReadPort } from '@satgraph/graph';
-import type { GraphSnapshot } from '@satgraph/publishing';
+import type { CatalogReader } from '@sategraph/catalog';
+import type { GraphReadPort } from '@sategraph/graph';
+import type { GraphSnapshot } from '@sategraph/publishing';
 import {
   buildReadModels,
   getSeedSnapshot,
   readModelEntries,
-} from '@satgraph/publishing';
-import type { Manifest } from '@satgraph/contracts';
+} from '@sategraph/publishing';
+import type { Manifest } from '@sategraph/contracts';
 import { MemoryReadModelStore } from '../kv/read-model-store';
 import type { EventReader, ShareStore } from '../ports';
 import { SnapshotCatalogReader } from './catalog-reader';

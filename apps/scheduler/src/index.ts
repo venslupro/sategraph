@@ -9,7 +9,7 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from 'cloudflare:workers';
-import type { Manifest } from '@satgraph/contracts';
+import type { Manifest } from '@sategraph/contracts';
 import type { SchedulerBindings } from './services';
 import { readModelStore } from './services';
 import { refreshOrbits } from './workflows/orbit-refresh';
@@ -160,7 +160,7 @@ async function handleAdmin(
 ): Promise<Response> {
   const url = new URL(request.url);
   if (url.pathname === '/health') {
-    return Response.json({ status: 'ok', service: 'satgraph-scheduler' });
+    return Response.json({ status: 'ok', service: 'sategraph-scheduler' });
   }
   if (request.method !== 'POST') {
     return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 });

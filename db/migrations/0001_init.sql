@@ -1,4 +1,4 @@
--- SatGraph D1 schema: search projection, event log, agent analytics, alerts.
+-- SateGraph D1 schema: search projection, event log, agent analytics, alerts.
 -- Graph data lives in Neo4j; D1 never stores relations.
 -- Write-side tables are populated by workflows; user requests never write.
 

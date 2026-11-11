@@ -1,6 +1,6 @@
 /** Constellation matrix: planes as rows, slots as columns. */
 import { useEffect, useState } from 'react';
-import type { Constellation } from '@satgraph/contracts';
+import type { Constellation } from '@sategraph/contracts';
 import { api } from '../api/client';
 
 interface ConstellationDialogProps {

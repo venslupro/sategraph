@@ -3,7 +3,7 @@
  * expressions let Neo4j compute the same summary as the browser; contract
  * tests compare both implementations on the seed elements.
  */
-import { EARTH_RADIUS_KM, EARTH_SIDEREAL_DAY_MIN } from '@satgraph/shared-kernel';
+import { EARTH_RADIUS_KM, EARTH_SIDEREAL_DAY_MIN } from '@sategraph/shared-kernel';
 import { EARTH_MU, REVOLUTIONS_PER_DAY, SECONDS_PER_DAY } from './summary';
 
 export interface CypherExpressions {

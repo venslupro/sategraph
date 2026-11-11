@@ -1,7 +1,7 @@
 /** React host for the imperative Three.js scene and the orbit worker. */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { eciToGeodetic, gstime, propagate, twoline2satrec } from 'satellite.js';
-import { toTleLines, type OmmRecord } from '@satgraph/orbit';
+import { toTleLines, type OmmRecord } from '@sategraph/orbit';
 import {
   GlobeScene,
   type ConfidenceLevel,

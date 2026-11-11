@@ -5,8 +5,8 @@
 import type {
   CatalogEntry,
   DomainEventView,
-} from '@satgraph/contracts';
-import type { CatalogFilter, CatalogReader } from '@satgraph/catalog';
+} from '@sategraph/contracts';
+import type { CatalogFilter, CatalogReader } from '@sategraph/catalog';
 import type { EventReader } from '../ports';
 
 interface SatelliteRow {

@@ -11,7 +11,7 @@ import type {
   OrbitSummary,
   Relation,
   SourceHealth,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 
 export interface SnapshotOrbit {
   epoch: string;

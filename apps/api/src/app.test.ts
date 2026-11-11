@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import type { Env } from '@satgraph/infra';
+import type { Env } from '@sategraph/infra';
 import { app } from './app';
 
 const env = { AGENT_MODE: 'fake', GRAPH_BACKEND: 'd1' } as unknown as Env;
 
-describe('satgraph api', () => {
+describe('sategraph api', () => {
   it('reports health', async () => {
     const response = await app.request('/health', undefined, env);
     expect(response.status).toBe(200);
     const body = (await response.json()) as { status: string; service: string };
     expect(body.status).toBe('ok');
-    expect(body.service).toBe('satgraph-api');
+    expect(body.service).toBe('sategraph-api');
   });
 
   it('serves the manifest with versions and modes', async () => {

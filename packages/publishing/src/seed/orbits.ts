@@ -2,8 +2,8 @@
  * Seed orbit elements in OMM form. The browser parses the generated CSV with
  * satellite.js; Neo4j would consume the same CSV through LOAD CSV.
  */
-import type { OmmRecord } from '@satgraph/orbit';
-import { OMM_COLUMNS } from '@satgraph/orbit';
+import type { OmmRecord } from '@sategraph/orbit';
+import { OMM_COLUMNS } from '@sategraph/orbit';
 import { summarizeForSeed } from './omm-builder';
 import type { SeedSatellite } from './dataset';
 

@@ -7,7 +7,7 @@ import type {
   Relation,
   RelationPath,
   RelationType,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 
 export interface GraphReadPort {
   listRelations(satelliteId: string): Promise<Relation[]>;

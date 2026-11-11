@@ -2,9 +2,9 @@
  * Runtime bindings. Every binding is optional so the same code boots in the
  * local seed mode, on Cloudflare Pages and in the scheduler worker.
  */
-export interface SatgraphEnv {
-  SATGRAPH_KV?: KVNamespace;
-  SATGRAPH_DB?: D1Database;
+export interface SategraphEnv {
+  SATEGRAPH_KV?: KVNamespace;
+  SATEGRAPH_DB?: D1Database;
   AI?: Ai;
   GRAPH_REFRESH_WORKFLOW?: Workflow;
   BACKUP_WORKFLOW?: Workflow;
@@ -32,4 +32,4 @@ export interface SatgraphEnv {
   PUBLIC_ORIGIN?: string;
 }
 
-export type Env = SatgraphEnv;
+export type Env = SategraphEnv;

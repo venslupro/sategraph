@@ -11,8 +11,8 @@ import type {
   Relation,
   ViewContext,
   ViewCommand,
-} from '@satgraph/contracts';
-import type { LlmMessage, LlmToolCall } from '@satgraph/infra';
+} from '@sategraph/contracts';
+import type { LlmMessage, LlmToolCall } from '@sategraph/infra';
 import type { Services } from '../../container';
 import { TOOLS, toolDefinitions, type AgentToolOutcome } from './tools';
 import { checkGrounding } from './grounding';
@@ -32,7 +32,7 @@ export interface AgentRunInput {
   emit: (event: AgentEvent) => Promise<void> | void;
 }
 
-const SYSTEM_PROMPT = `You are the SatGraph analyst for a public satellite knowledge graph.
+const SYSTEM_PROMPT = `You are the SateGraph analyst for a public satellite knowledge graph.
 Rules:
 - Use the provided tools to answer. Never invent counts, identifiers, dates or relationships.
 - Distinguish DECLARED, DERIVED and MODELED relations when you mention a relationship.

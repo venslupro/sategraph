@@ -2,7 +2,7 @@
  * Conditional HTTP client for scheduled source polling. Sends ETag and
  * Last-Modified so unchanged sources cost a 304 instead of a full download.
  */
-import type { HttpClient, HttpGetOptions, HttpResponseLike } from '@satgraph/ingestion';
+import type { HttpClient, HttpGetOptions, HttpResponseLike } from '@sategraph/ingestion';
 
 export class ConditionalHttpClient implements HttpClient {
   async get(
@@ -10,7 +10,7 @@ export class ConditionalHttpClient implements HttpClient {
     options: HttpGetOptions = {},
   ): Promise<HttpResponseLike> {
     const headers: Record<string, string> = {
-      'User-Agent': 'SatGraph/1.0 (+https://satgraph.example; public research)',
+      'User-Agent': 'SateGraph/1.0 (+https://sategraph.example; public research)',
       Accept: options.accept ?? '*/*',
     };
     if (options.etag) {

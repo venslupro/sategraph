@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseOmmCsv } from '@satgraph/orbit';
+import { parseOmmCsv } from '@sategraph/orbit';
 import { buildSeedDataset, buildSeedSnapshot } from '../src/index';
 import { buildReadModels, readModelEntries, satelliteShard } from '../src/read-models';
 

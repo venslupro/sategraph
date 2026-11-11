@@ -3,8 +3,8 @@
  * history list the UI uses for replay. The previous backup is never deleted by
  * this workflow; B2 lifecycle rules own retention.
  */
-import { buildReadModels, buildSeedSnapshot, readModelEntries } from '@satgraph/publishing';
-import type { Manifest } from '@satgraph/contracts';
+import { buildReadModels, buildSeedSnapshot, readModelEntries } from '@sategraph/publishing';
+import type { Manifest } from '@sategraph/contracts';
 import type { SchedulerBindings } from '../services';
 import { blobStore, publishToD1, readModelStore } from '../services';
 
@@ -37,8 +37,8 @@ export async function runBackup(
   };
   const entries = readModelEntries(snapshot, mode);
   await store.putMany(entries);
-  if (env.SATGRAPH_DB) {
-    await publishToD1(env.SATGRAPH_DB, buildReadModels(snapshot));
+  if (env.SATEGRAPH_DB) {
+    await publishToD1(env.SATEGRAPH_DB, buildReadModels(snapshot));
   }
 
   const raw = await store.getText(HISTORY_KEY);

@@ -3,9 +3,9 @@
  * write. The scheduler never parses or recomputes elements; the browser and
  * Neo4j consume the published CSV.
  */
-import { CELESTRAK_GP, assessHealth, degradedRecord, healthyRecord } from '@satgraph/ingestion';
-import { toIsoUtc } from '@satgraph/shared-kernel';
-import type { SourceHealth } from '@satgraph/contracts';
+import { CELESTRAK_GP, assessHealth, degradedRecord, healthyRecord } from '@sategraph/ingestion';
+import { toIsoUtc } from '@sategraph/shared-kernel';
+import type { SourceHealth } from '@sategraph/contracts';
 import type { SchedulerBindings } from '../services';
 import { httpClient, readModelStore } from '../services';
 

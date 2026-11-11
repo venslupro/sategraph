@@ -8,7 +8,7 @@ import type {
   OrbitSummary,
   Relation as RelationView,
   RelationType,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 import type { ConstellationView } from './rule-types';
 
 export interface RuleSatellite {

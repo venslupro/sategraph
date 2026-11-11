@@ -1,8 +1,8 @@
 /**
  * Snapshot catalog reader. Used by the seed/D1 fallback path and by tests.
  */
-import type { CatalogEntry } from '@satgraph/contracts';
-import type { CatalogFilter, CatalogReader } from '@satgraph/catalog';
+import type { CatalogEntry } from '@sategraph/contracts';
+import type { CatalogFilter, CatalogReader } from '@sategraph/catalog';
 
 export class SnapshotCatalogReader implements CatalogReader {
   private readonly entries: CatalogEntry[];

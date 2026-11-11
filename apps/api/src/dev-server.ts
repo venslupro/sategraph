@@ -1,7 +1,7 @@
 /** Node development server. Cloudflare bindings are absent, so the seed runtime is used. */
 import { serve } from '@hono/node-server';
 import { app } from './app';
-import type { Env } from '@satgraph/infra';
+import type { Env } from '@sategraph/infra';
 
 const port = Number(process.env.PORT ?? 8787);
 
@@ -14,4 +14,4 @@ serve({
     } as unknown as ExecutionContext),
 });
 
-console.log(`SatGraph API listening on http://localhost:${port}`);
+console.log(`SateGraph API listening on http://localhost:${port}`);

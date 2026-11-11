@@ -3,8 +3,8 @@
  * policy picks a winning value per field category and keeps all candidates.
  * Adjusting priorities is configuration only, mirroring the design intent.
  */
-import type { ProvenanceEntry } from '@satgraph/contracts';
-import { toIsoUtc } from '@satgraph/shared-kernel';
+import type { ProvenanceEntry } from '@sategraph/contracts';
+import { toIsoUtc } from '@sategraph/shared-kernel';
 
 export type FieldCategory =
   | 'identity'

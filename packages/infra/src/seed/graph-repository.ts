@@ -8,9 +8,9 @@ import type {
   Relation,
   RelationPath,
   RelationType,
-} from '@satgraph/contracts';
-import type { GraphReadPort } from '@satgraph/graph';
-import type { GraphSnapshot } from '@satgraph/publishing';
+} from '@sategraph/contracts';
+import type { GraphReadPort } from '@sategraph/graph';
+import type { GraphSnapshot } from '@sategraph/publishing';
 
 export class SnapshotGraphRepository implements GraphReadPort {
   private readonly relations: Relation[];

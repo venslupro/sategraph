@@ -1,5 +1,5 @@
 {
-  "name": "@satgraph/web",
+  "name": "@sategraph/web",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@satgraph/contracts": "1.0.0",
-    "@satgraph/orbit": "1.0.0",
-    "@satgraph/shared-kernel": "1.0.0",
+    "@sategraph/contracts": "1.0.0",
+    "@sategraph/orbit": "1.0.0",
+    "@sategraph/shared-kernel": "1.0.0",
     "cytoscape": "^3.30.2",
     "minisearch": "^7.1.0",
     "react": "^19.0.0",

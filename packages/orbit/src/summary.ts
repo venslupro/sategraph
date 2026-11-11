@@ -8,9 +8,9 @@ import {
   EARTH_SIDEREAL_DAY_MIN,
   normalizeLongitude,
   radToDeg,
-} from '@satgraph/shared-kernel';
-import type { OrbitClass, OrbitSummary } from '@satgraph/contracts';
-import { parseOmmEpoch } from '@satgraph/shared-kernel';
+} from '@sategraph/shared-kernel';
+import type { OrbitClass, OrbitSummary } from '@sategraph/contracts';
+import { parseOmmEpoch } from '@sategraph/shared-kernel';
 import type { OmmRecord } from './omm';
 
 export const EARTH_MU = 398600.4418;

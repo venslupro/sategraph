@@ -3,7 +3,7 @@
  * declares the request, the refresh cadence, the license and the mapping from
  * external columns to domain fields. Import Cypher is generated from mappings.
  */
-import type { FieldCategory } from '@satgraph/catalog';
+import type { FieldCategory } from '@sategraph/catalog';
 
 export type SourceFormat = 'csv' | 'tsv' | 'json' | 'html' | 'curation';
 
@@ -51,7 +51,7 @@ export class HttpSourceAdapter implements SourceAdapter {
 
   requestHeaders(): Record<string, string> {
     return {
-      'User-Agent': 'SatGraph/1.0 (+https://satgraph.example; public research)',
+      'User-Agent': 'SateGraph/1.0 (+https://sategraph.example; public research)',
       Accept: this.format === 'csv' ? 'text/csv' : '*/*',
       ...this.extraHeaders,
     };
@@ -161,12 +161,12 @@ export const GNSS_STATUS = new HttpSourceAdapter(
 
 export const CURATION = new HttpSourceAdapter(
   'curation',
-  'SatGraph curated relations',
+  'SateGraph curated relations',
   '/curation/relations.csv',
   'curation',
   'on-deploy',
-  'CC BY 4.0 (curated by SatGraph)',
-  'SatGraph curation team',
+  'CC BY 4.0 (curated by SateGraph)',
+  'SateGraph curation team',
   [
     { column: 'from_id', field: 'from', category: 'relation', source: 'curation' },
     { column: 'to_id', field: 'to', category: 'relation', source: 'curation' },

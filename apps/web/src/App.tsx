@@ -8,9 +8,9 @@ import type {
   LayerLinks,
   Manifest,
   SatelliteDetail,
-} from '@satgraph/contracts';
-import type { ViewCommand } from '@satgraph/contracts';
-import { meanMotionToSemiMajorAxis, parseOmmCsv, type OmmRecord } from '@satgraph/orbit';
+} from '@sategraph/contracts';
+import type { ViewCommand } from '@sategraph/contracts';
+import { meanMotionToSemiMajorAxis, parseOmmCsv, type OmmRecord } from '@sategraph/orbit';
 import { api } from './api/client';
 import { Header } from './components/Header';
 import { LayerPanel } from './components/LayerPanel';
@@ -38,7 +38,7 @@ interface Bootstrap {
   records: OmmRecord[];
 }
 
-const WATCH_KEY = 'satgraph.watchlist';
+const WATCH_KEY = 'sategraph.watchlist';
 const DEFAULT_WATCH = ['25544', '48274', '20580'];
 
 function readWatchlist(): string[] {
@@ -139,7 +139,7 @@ export function App() {
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) {
-          setBootError(reason instanceof Error ? reason.message : 'Failed to load SatGraph');
+          setBootError(reason instanceof Error ? reason.message : 'Failed to load SateGraph');
         }
       });
     return () => controller.abort();
@@ -424,7 +424,7 @@ export function App() {
     return (
       <div className="app">
         <div style={{ margin: 'auto', maxWidth: 420, padding: 24 }}>
-          <h1 style={{ fontFamily: 'var(--display)' }}>SatGraph is unavailable</h1>
+          <h1 style={{ fontFamily: 'var(--display)' }}>SateGraph is unavailable</h1>
           <div className="error-banner">{bootError}</div>
           <p className="footnote" style={{ marginTop: 16 }}>
             The local API runs on port 8787. Start it with <code>npm run dev</code> and

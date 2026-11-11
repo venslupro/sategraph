@@ -10,8 +10,8 @@ import type {
   RelationEndpoint,
   RelationPath,
   RelationType,
-} from '@satgraph/contracts';
-import type { GraphReadPort, GraphWritePort } from '@satgraph/graph';
+} from '@sategraph/contracts';
+import type { GraphReadPort, GraphWritePort } from '@sategraph/graph';
 import type { Neo4jClient, Neo4jNode, Neo4jRelationship } from './client';
 
 const RELATION_TYPES = new Set<string>([

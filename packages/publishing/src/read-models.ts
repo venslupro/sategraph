@@ -12,7 +12,7 @@ import type {
   Manifest,
   Relation,
   SourceHealth,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 import type {
   GraphSnapshot,
   ReadModelBundle,

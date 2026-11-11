@@ -1,10 +1,10 @@
-# satgraph
-卫星知识图谱
+# sategraph
+卫星图谱检索平台
 
-SatGraph is a public satellite knowledge graph. It fuses catalog metadata,
-orbital elements, constellation structure and modeled links into one browsable
-graph, and pairs a 3D globe with a grounded assistant. The project keeps the
-original positioning: 卫星知识图谱 (satellite knowledge graph).
+SateGraph is a public satellite graph retrieval platform (卫星图谱检索平台).
+It fuses catalog metadata, orbital elements, constellation structure and
+modeled links into one browsable, searchable graph, and pairs a 3D globe with
+a grounded assistant.
 
 ## What it does
 
@@ -138,7 +138,7 @@ protects `POST /api/v1/agent/chat` from abuse, and Terraform creates it
 
 ```bash
 terraform -chdir=terraform output turnstile_sitekey          # render in the web app if you add the widget
-npx wrangler pages secret put TURNSTILE_SECRET --project-name satgraph
+npx wrangler pages secret put TURNSTILE_SECRET --project-name sategraph
 # paste the value of: terraform -chdir=terraform output -raw turnstile_secret
 ```
 
@@ -157,9 +157,9 @@ Point the platform at an AuraDB (or any Neo4j Query API v2 endpoint) with
 secrets on both the Pages project and the scheduler worker:
 
 ```bash
-npx wrangler pages secret put NEO4J_HTTP_URL --project-name satgraph
-npx wrangler pages secret put NEO4J_USER --project-name satgraph
-npx wrangler pages secret put NEO4J_PASSWORD --project-name satgraph
+npx wrangler pages secret put NEO4J_HTTP_URL --project-name sategraph
+npx wrangler pages secret put NEO4J_USER --project-name sategraph
+npx wrangler pages secret put NEO4J_PASSWORD --project-name sategraph
 npx wrangler secret put NEO4J_HTTP_URL --config apps/scheduler/wrangler.toml
 npx wrangler secret put NEO4J_USER --config apps/scheduler/wrangler.toml
 npx wrangler secret put NEO4J_PASSWORD --config apps/scheduler/wrangler.toml
@@ -247,8 +247,8 @@ Variables: `R2_STATE_BUCKET` and `R2_STATE_ENDPOINT`
 3. Add the optional runtime secrets:
 
    ```bash
-   npx wrangler pages secret put NEO4J_PASSWORD --project-name satgraph
-   npx wrangler pages secret put TURNSTILE_SECRET --project-name satgraph
+   npx wrangler pages secret put NEO4J_PASSWORD --project-name sategraph
+   npx wrangler pages secret put TURNSTILE_SECRET --project-name sategraph
    npx wrangler secret put ADMIN_TOKEN --config apps/scheduler/wrangler.toml
    ```
 

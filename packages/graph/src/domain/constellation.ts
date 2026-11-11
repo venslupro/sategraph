@@ -8,7 +8,7 @@ import type {
   LifecycleStatus,
   Relation,
   Slot,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 import { Relation as RelationAggregate } from './relation';
 
 export interface ConstellationMember {

@@ -1,18 +1,18 @@
 # Scheduler worker: orbit polling, 48h graph publication and weekly backups.
 # D1 and KV are provisioned by terraform/ (single production environment);
 # paste the `terraform output` values into the two identifiers below.
-name = "satgraph-scheduler"
+name = "sategraph-scheduler"
 main = "src/index.ts"
 compatibility_date = "2025-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [[kv_namespaces]]
-binding = "SATGRAPH_KV"
+binding = "SATEGRAPH_KV"
 id = "REPLACE_WITH_KV_NAMESPACE_ID" # terraform output kv_namespace_id
 
 [[d1_databases]]
-binding = "SATGRAPH_DB"
-database_name = "satgraph"
+binding = "SATEGRAPH_DB"
+database_name = "sategraph"
 database_id = "REPLACE_WITH_D1_DATABASE_ID" # terraform output d1_database_id
 
 [ai]

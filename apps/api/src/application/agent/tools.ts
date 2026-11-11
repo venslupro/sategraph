@@ -8,7 +8,7 @@ import type {
   Link,
   SatelliteDetail,
   ViewContext,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 import type { Services } from '../../container';
 
 export interface AgentToolContext {
@@ -92,7 +92,7 @@ export const TOOLS: AgentTool[] = [
           orbitClass: entry.orbitClass,
           status: entry.status,
         })),
-        citations: [{ label: 'SatGraph satellite catalog', source: 'catalog' }],
+        citations: [{ label: 'SateGraph satellite catalog', source: 'catalog' }],
       };
     },
   },
@@ -157,7 +157,7 @@ export const TOOLS: AgentTool[] = [
                 .join(', ')}. ${names}.`,
         data: filtered.slice(0, 25),
         citations: [
-          { label: 'SatGraph graph relations', source: 'knowledge graph' },
+          { label: 'SateGraph graph relations', source: 'knowledge graph' },
         ],
       };
     },
@@ -273,7 +273,7 @@ export const TOOLS: AgentTool[] = [
         ok: true,
         summary: `Shortest path uses ${path.edges.length} relations: ${names}.`,
         data: path,
-        citations: [{ label: 'SatGraph graph relations', source: 'knowledge graph' }],
+        citations: [{ label: 'SateGraph graph relations', source: 'knowledge graph' }],
       };
     },
   },

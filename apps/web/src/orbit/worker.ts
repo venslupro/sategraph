@@ -3,7 +3,7 @@
  * receives OMM CSV once, converts each record to a TLE projection required by
  * the SGP4 implementation, and answers time ticks with geodetic samples.
  */
-import { parseOmmCsv, toTleLines } from '@satgraph/orbit';
+import { parseOmmCsv, toTleLines } from '@sategraph/orbit';
 import { eciToGeodetic, gstime, propagate, twoline2satrec } from 'satellite.js';
 import type { SatRec } from 'satellite.js';
 

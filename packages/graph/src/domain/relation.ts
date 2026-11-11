@@ -7,8 +7,8 @@ import type {
   Relation as RelationView,
   RelationEndpoint,
   RelationType,
-} from '@satgraph/contracts';
-import { relationKey } from '@satgraph/shared-kernel';
+} from '@sategraph/contracts';
+import { relationKey } from '@sategraph/shared-kernel';
 
 export interface Evidence {
   label: string;

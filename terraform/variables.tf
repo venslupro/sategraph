@@ -1,4 +1,4 @@
 variable "cloudflare_account_id" {
-  description = "Cloudflare account ID that owns the SatGraph production resources."
+  description = "Cloudflare account ID that owns the SateGraph production resources."
   type        = string
 }

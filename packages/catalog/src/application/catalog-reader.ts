@@ -2,7 +2,7 @@
  * Catalog read port. The publishing context projects these entries into the
  * KV read model; adapters live in the infrastructure layer.
  */
-import type { CatalogEntry, LifecycleStatus } from '@satgraph/contracts';
+import type { CatalogEntry, LifecycleStatus } from '@sategraph/contracts';
 
 export interface CatalogFilter {
   text?: string;

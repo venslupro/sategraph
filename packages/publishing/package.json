@@ -1,5 +1,5 @@
 {
-  "name": "@satgraph/publishing",
+  "name": "@sategraph/publishing",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -9,10 +9,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@satgraph/catalog": "1.0.0",
-    "@satgraph/contracts": "1.0.0",
-    "@satgraph/graph": "1.0.0",
-    "@satgraph/orbit": "1.0.0",
-    "@satgraph/shared-kernel": "1.0.0"
+    "@sategraph/catalog": "1.0.0",
+    "@sategraph/contracts": "1.0.0",
+    "@sategraph/graph": "1.0.0",
+    "@sategraph/orbit": "1.0.0",
+    "@sategraph/shared-kernel": "1.0.0"
   }
 }

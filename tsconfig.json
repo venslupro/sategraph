@@ -4,7 +4,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@satgraph/*": ["packages/*/src/index.ts"]
+      "@sategraph/*": ["packages/*/src/index.ts"]
     }
   },
   "include": [

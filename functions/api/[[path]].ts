@@ -2,7 +2,7 @@
  * Cloudflare Pages Functions entry. All /api/* requests hit the same Hono app
  * that runs locally and in tests.
  */
-import type { Env } from '@satgraph/infra';
+import type { Env } from '@sategraph/infra';
 import { app } from '../../apps/api/src/app';
 
 interface PagesContext {

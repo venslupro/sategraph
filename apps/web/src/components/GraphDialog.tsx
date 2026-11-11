@@ -5,7 +5,7 @@ import cytoscape, {
   type ElementDefinition,
 } from 'cytoscape';
 import { useEffect, useRef, useState } from 'react';
-import type { Neighborhood } from '@satgraph/contracts';
+import type { Neighborhood } from '@sategraph/contracts';
 import { api } from '../api/client';
 
 interface GraphDialogProps {

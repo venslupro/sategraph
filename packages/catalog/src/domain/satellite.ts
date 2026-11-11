@@ -6,8 +6,8 @@ import type {
   LifecycleStatus,
   OrbitSummary,
   ProvenanceEntry,
-} from '@satgraph/contracts';
-import { toIsoUtc, type NoradId } from '@satgraph/shared-kernel';
+} from '@sategraph/contracts';
+import { toIsoUtc, type NoradId } from '@sategraph/shared-kernel';
 
 export interface LocalizedName {
   value: string;

@@ -2,8 +2,8 @@
  * Source health and freshness rules. The API exposes these records so users
  * can see whether displayed data is current.
  */
-import type { SourceHealth } from '@satgraph/contracts';
-import { toIsoUtc } from '@satgraph/shared-kernel';
+import type { SourceHealth } from '@sategraph/contracts';
+import { toIsoUtc } from '@sategraph/shared-kernel';
 import type { HealthRecord } from './ports';
 
 export const FRESHNESS_LIMITS_MS: Record<string, number> = {

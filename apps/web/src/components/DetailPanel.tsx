@@ -1,5 +1,5 @@
 /** Right rail: satellite dossier, provenance and the empty-state watchlist. */
-import type { CatalogEntry, DomainEventView, Layer, SatelliteDetail } from '@satgraph/contracts';
+import type { CatalogEntry, DomainEventView, Layer, SatelliteDetail } from '@sategraph/contracts';
 
 interface LiveSample {
   lat: number;
@@ -351,7 +351,7 @@ export function DetailPanel({
           className="primary"
           onClick={() => onAsk(`Tell me about ${satellite.name} and its relationships.`)}
         >
-          Ask SatGraph
+          Ask SateGraph
         </button>
       </div>
     </aside>

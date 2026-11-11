@@ -7,7 +7,7 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
   resolve: {
     alias: [
-      { find: /^@satgraph\/([a-z-]+)$/, replacement: `${root}packages/$1/src/index.ts` },
+      { find: /^@sategraph\/([a-z-]+)$/, replacement: `${root}packages/$1/src/index.ts` },
     ],
   },
   test: {

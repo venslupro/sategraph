@@ -8,8 +8,8 @@
  * parameters and are illustrative, not operational. Named satellites use their
  * real NORAD identifiers where they are public.
  */
-import { greenwichSiderealDegrees } from '@satgraph/orbit';
-import type { ConfidenceLevel } from '@satgraph/shared-kernel';
+import { greenwichSiderealDegrees } from '@sategraph/orbit';
+import type { ConfidenceLevel } from '@sategraph/shared-kernel';
 
 export const SEED_EPOCH = '2026-11-10T00:00:00.000000';
 export const SEED_EPOCH_DATE = new Date('2026-11-10T00:00:00Z');
@@ -856,7 +856,7 @@ export const SEED_SOURCES: SeedDataset['sources'] = [
   { id: 'wikidata', label: 'Wikidata', license: 'CC0 1.0', dataTime: SEED_EPOCH, status: 'OK', message: 'Seed snapshot' },
   { id: 'satnogs', label: 'SatNOGS DB', license: 'CC BY-SA 4.0', dataTime: SEED_EPOCH, status: 'DEGRADED', message: 'Optional source disabled' },
   { id: 'gnss-status', label: 'GNSS official status', license: 'Public pages', dataTime: SEED_EPOCH, status: 'DEGRADED', message: 'Status pages not connected in this deployment' },
-  { id: 'curation', label: 'SatGraph curation', license: 'CC BY 4.0', dataTime: SEED_EPOCH, status: 'OK', message: 'Curated relations' },
+  { id: 'curation', label: 'SateGraph curation', license: 'CC BY 4.0', dataTime: SEED_EPOCH, status: 'OK', message: 'Curated relations' },
 ];
 
 /** Builds the full demonstration dataset. */

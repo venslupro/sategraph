@@ -1,4 +1,4 @@
-# SatGraph production infrastructure.
+# SateGraph production infrastructure.
 #
 # Only the data resources live here; the scheduler Worker and the Pages site
 # are deployed by the CD pipeline with wrangler. There is a single production
@@ -25,14 +25,14 @@ provider "cloudflare" {
   # Authenticates with the CLOUDFLARE_API_TOKEN environment variable.
 }
 
-resource "cloudflare_d1_database" "satgraph" {
+resource "cloudflare_d1_database" "sategraph" {
   account_id = var.cloudflare_account_id
-  name       = "satgraph"
+  name       = "sategraph"
 }
 
-resource "cloudflare_workers_kv_namespace" "satgraph" {
+resource "cloudflare_workers_kv_namespace" "sategraph" {
   account_id = var.cloudflare_account_id
-  title      = "satgraph-kv"
+  title      = "sategraph-kv"
 }
 
 # Protects POST /api/v1/agent/chat from abuse. The API verifies the token with
@@ -40,8 +40,8 @@ resource "cloudflare_workers_kv_namespace" "satgraph" {
 # it is an account capability bound through the [ai] wrangler binding.
 resource "cloudflare_turnstile_widget" "agent" {
   account_id = var.cloudflare_account_id
-  name       = "satgraph-agent"
-  domains    = ["satgraph.pages.dev"]
+  name       = "sategraph-agent"
+  domains    = ["sategraph.pages.dev"]
   mode       = "managed"
   region     = "world"
 }

@@ -1,5 +1,5 @@
 /** Left rail: layers, relation filters, confidence legend and source health. */
-import type { Layer, SourceHealth } from '@satgraph/contracts';
+import type { Layer, SourceHealth } from '@sategraph/contracts';
 
 interface LayerPanelProps {
   layers: Layer[];

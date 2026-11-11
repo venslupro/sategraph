@@ -1,12 +1,12 @@
 /** Shared scheduler helpers: adapter construction and D1 publication. */
-import type { Env } from '@satgraph/infra';
+import type { Env } from '@sategraph/infra';
 import {
   B2BlobStore,
   ConditionalHttpClient,
   KvReadModelStore,
   Neo4jClient,
-} from '@satgraph/infra';
-import type { GraphSnapshot, ReadModelBundle } from '@satgraph/publishing';
+} from '@sategraph/infra';
+import type { GraphSnapshot, ReadModelBundle } from '@sategraph/publishing';
 
 export interface SchedulerBindings extends Env {
   ADMIN_TOKEN?: string;
@@ -35,10 +35,10 @@ export function httpClient(): ConditionalHttpClient {
 }
 
 export function requireKv(env: SchedulerBindings): KVNamespace {
-  if (!env.SATGRAPH_KV) {
-    throw new Error('SATGRAPH_KV binding is required by the scheduler');
+  if (!env.SATEGRAPH_KV) {
+    throw new Error('SATEGRAPH_KV binding is required by the scheduler');
   }
-  return env.SATGRAPH_KV;
+  return env.SATEGRAPH_KV;
 }
 
 export function readModelStore(env: SchedulerBindings): KvReadModelStore {

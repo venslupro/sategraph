@@ -1,5 +1,5 @@
 {
-  "name": "@satgraph/ingestion",
+  "name": "@sategraph/ingestion",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@satgraph/catalog": "1.0.0",
-    "@satgraph/shared-kernel": "1.0.0"
+    "@sategraph/catalog": "1.0.0",
+    "@sategraph/shared-kernel": "1.0.0"
   }
 }

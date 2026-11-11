@@ -170,7 +170,7 @@ export class FakeLlmProvider implements LlmProvider {
         ? ' Inter-satellite links for this constellation are MODELED from its public architecture; they are not measured operational links.'
         : '';
     return {
-      content: `${summary}${modeledNote}\n\nThese figures come directly from the SatGraph knowledge graph.`,
+      content: `${summary}${modeledNote}\n\nThese figures come directly from the SateGraph knowledge graph.`,
       toolCalls: [],
       finishReason: 'stop',
     };

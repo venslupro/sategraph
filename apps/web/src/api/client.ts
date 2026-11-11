@@ -1,4 +1,4 @@
-/** Typed client for the public SatGraph API. */
+/** Typed client for the public SateGraph API. */
 import type {
   AgentEvent,
   AgentShare,
@@ -11,7 +11,7 @@ import type {
   Neighborhood,
   SatelliteDetail,
   SearchResponse,
-} from '@satgraph/contracts';
+} from '@sategraph/contracts';
 
 export interface ApiMeta {
   graphVersion: string;

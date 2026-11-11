@@ -3,7 +3,7 @@
  * canonical element format because NORAD identifiers are about to exceed five
  * digits. The same CSV feeds the browser propagator and Neo4j LOAD CSV.
  */
-import { parseOmmEpoch, toIsoUtc } from '@satgraph/shared-kernel';
+import { parseOmmEpoch, toIsoUtc } from '@sategraph/shared-kernel';
 
 export const OMM_COLUMNS = [
   'OBJECT_NAME',

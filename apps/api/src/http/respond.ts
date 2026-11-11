@@ -1,7 +1,7 @@
 /** Shared HTTP helpers: envelopes, ETags and cache headers. */
 import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { ApiMeta } from '@satgraph/contracts';
+import type { ApiMeta } from '@sategraph/contracts';
 import type { Services } from '../container';
 
 function fnv1a(value: string): string {

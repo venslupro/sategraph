@@ -1,6 +1,6 @@
 /** Events served from the seed snapshot. */
-import type { DomainEventView } from '@satgraph/contracts';
-import type { GraphSnapshot } from '@satgraph/publishing';
+import type { DomainEventView } from '@sategraph/contracts';
+import type { GraphSnapshot } from '@sategraph/publishing';
 import type { EventReader } from '../ports';
 
 export class SnapshotEventReader implements EventReader {

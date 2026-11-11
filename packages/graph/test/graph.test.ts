@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LifecycleStatus } from '@satgraph/contracts';
+import type { LifecycleStatus } from '@sategraph/contracts';
 import {
   Constellation,
   clusterPlanes,

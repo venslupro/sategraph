@@ -12,8 +12,8 @@ import {
   searchQuerySchema,
   type AgentEvent,
   type SearchResponse,
-} from '@satgraph/contracts';
-import type { Env } from '@satgraph/infra';
+} from '@sategraph/contracts';
+import type { Env } from '@sategraph/infra';
 import { createServices, type Services } from './container';
 import { apiError, respond, respondCsv } from './http/respond';
 import { allowRequest, clientKey } from './http/rate-limit';
@@ -41,7 +41,7 @@ app.use('/api/*', async (c, next) => {
 });
 
 app.get('/health', (c) =>
-  c.json({ status: 'ok', service: 'satgraph-api', time: new Date().toISOString() }),
+  c.json({ status: 'ok', service: 'sategraph-api', time: new Date().toISOString() }),
 );
 
 app.get('/api/v1/manifest', async (c) => {

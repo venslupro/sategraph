@@ -1,6 +1,6 @@
 /** Bottom agent dock: grounded question answering with streamed tool trace. */
 import { useEffect, useRef, useState } from 'react';
-import type { AgentEvent, Citation, ViewCommand } from '@satgraph/contracts';
+import type { AgentEvent, Citation, ViewCommand } from '@sategraph/contracts';
 import { api, streamChat } from '../api/client';
 
 interface AgentContext {
@@ -394,7 +394,7 @@ export function AgentBar({
       >
         <span className="tag">ASK</span>
         <input
-          aria-label="Ask SatGraph"
+          aria-label="Ask SateGraph"
           placeholder={
             latest?.shareId && !busy
               ? 'Ask a follow-up question'

@@ -6,7 +6,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildReadModels, buildSeedSnapshot } from '@satgraph/publishing';
+import { buildReadModels, buildSeedSnapshot } from '@sategraph/publishing';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT = join(ROOT, 'db', 'migrations', '0002_seed.sql');

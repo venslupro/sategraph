@@ -1,5 +1,5 @@
 /** Top bar: identity, search, simulation clock and speed. */
-import type { CatalogEntry, Manifest } from '@satgraph/contracts';
+import type { CatalogEntry, Manifest } from '@sategraph/contracts';
 import { Search } from './Search';
 
 interface HeaderProps {
@@ -46,7 +46,7 @@ export function Header({
           <circle cx="7" cy="24.6" r="1.8" fill="#8fa6c1" />
         </svg>
         <div>
-          <h1>SatGraph</h1>
+          <h1>SateGraph</h1>
           <p>Satellite knowledge graph</p>
         </div>
       </div>
