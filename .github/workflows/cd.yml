@@ -1,0 +1,81 @@
+name: cd
+
+# Deploys both services to the single production environment and initializes
+# the database. The terraform pipeline owns D1 + KV; this pipeline resolves
+# their IDs from the Cloudflare API and injects them into wrangler.toml.
+#
+# Only the main branch may deploy: the workflow_run trigger is limited to
+# main, and a manual dispatch from any other branch skips the deploy job.
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' &&
+        github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Resolve terraform-managed bindings
+        run: |
+          set -euo pipefail
+          d1_id=$(npx wrangler d1 list --json | jq -r '[.[] | select(.name == "sategraph")][0] | (.uuid // .id) // empty')
+          kv_id=$(npx wrangler kv namespace list --json | jq -r '[.[] | select(.title == "sategraph-kv")][0].id // empty')
+          if [ -z "$d1_id" ] || [ -z "$kv_id" ]; then
+            echo "::error::D1 database 'sategraph' or KV namespace 'sategraph-kv' is missing. Run the terraform pipeline first."
+            exit 1
+          fi
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/${d1_id}/" wrangler.toml apps/scheduler/wrangler.toml
+          sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/${kv_id}/" wrangler.toml apps/scheduler/wrangler.toml
+          {
+            echo "### Bindings"
+            echo "- D1: ${d1_id}"
+            echo "- KV: ${kv_id}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Initialize database (schema + first seed)
+        run: |
+          set -euo pipefail
+          npm run db:migrate:remote
+          rows=$(npx wrangler d1 execute sategraph --remote --json \
+            --command "SELECT COUNT(*) AS total FROM satellite_search" \
+            | jq -r '.[0].results[0].total')
+          if [ "$rows" -eq 0 ]; then
+            npm run db:seed:remote
+            echo "Seeded the empty D1 database." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "D1 already seeded ($rows satellites); schema migrated only." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Deploy backend (scheduler worker)
+        run: npm run deploy:scheduler
+
+      - name: Deploy frontend and API (Pages Functions)
+        run: npx wrangler pages deploy apps/web/dist --project-name sategraph --branch main

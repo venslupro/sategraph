@@ -1,0 +1,26 @@
+{
+  "name": "@sategraph/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@sategraph/contracts": "1.0.0",
+    "@sategraph/orbit": "1.0.0",
+    "@sategraph/shared-kernel": "1.0.0",
+    "cytoscape": "^3.30.2",
+    "minisearch": "^7.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "satellite.js": "^5.0.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.7"
+  }
+}

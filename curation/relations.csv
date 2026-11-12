@@ -1,0 +1,10 @@
+from_id,to_id,type,confidence,method,label,evidence_label,evidence_url
+900501,25544,DOCKED_TO,DECLARED,CuratedDocking@1,Crew Dragon Endeavour docked to the ISS,NASA Crew-9 mission overview,https://www.nasa.gov/
+40697,42063,FORMATION_WITH,DERIVED,FormationRule@1,"Sentinel-2A and Sentinel-2B share one orbital plane, 180 degrees apart",Copernicus Sentinel-2 mission design,https://sentinel.esa.int/
+39084,49260,FORMATION_WITH,DERIVED,FormationRule@1,"Landsat 8 and Landsat 9 share one orbital plane, 180 degrees apart",USGS Landsat orbit configuration,https://www.usgs.gov/landsat-missions
+48274,org-cnsa,OWNED_BY,DECLARED,CuratedOwnership@1,Tiangong is owned by CNSA,CMSA mission overview,
+42915,25544,RELAY_SERVES,DECLARED,CuratedRelay@1,NASA TDRS relay support to ISS,NASA TDRS program,https://www.nasa.gov/tdrs/
+39504,25544,RELAY_SERVES,DECLARED,CuratedRelay@1,NASA TDRS relay support to ISS,NASA TDRS program,https://www.nasa.gov/tdrs/
+37849,20580,RELAY_SERVES,DECLARED,CuratedRelay@1,TDRS relay support to Hubble,NASA TDRS program,https://www.nasa.gov/tdrs/
+900502,48274,RELAY_SERVES,DECLARED,CuratedRelay@1,Tianlian relay support to the Tiangong station,China manned space program,
+900503,48274,RELAY_SERVES,DECLARED,CuratedRelay@1,Tianlian relay support to the Tiangong station,China manned space program,

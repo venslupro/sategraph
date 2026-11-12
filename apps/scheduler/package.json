@@ -1,0 +1,15 @@
+{
+  "name": "@sategraph/scheduler",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@sategraph/contracts": "1.0.0",
+    "@sategraph/graph": "1.0.0",
+    "@sategraph/infra": "1.0.0",
+    "@sategraph/orbit": "1.0.0",
+    "@sategraph/publishing": "1.0.0",
+    "@sategraph/shared-kernel": "1.0.0"
+  }
+}
