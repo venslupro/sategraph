@@ -10,10 +10,11 @@ name: terraform
 # Required repository configuration:
 #   secrets.CLOUDFLARE_API_TOKEN       token allowed to edit D1 + KV
 #   secrets.CLOUDFLARE_ACCOUNT_ID      Cloudflare account ID
-#   secrets.R2_STATE_ACCESS_KEY_ID     R2 S3 access key for the state bucket
-#   secrets.R2_STATE_SECRET_ACCESS_KEY R2 S3 secret key for the state bucket
-#   vars.R2_STATE_BUCKET               bootstrap bucket holding tfstate
-#   vars.R2_STATE_ENDPOINT             https://<account id>.r2.cloudflarestorage.com
+#   secrets.B2_STATE_KEY_ID            B2 application key ID for the state bucket
+#   secrets.B2_STATE_APP_KEY           B2 application key for the state bucket
+#
+# The state backend (bucket, endpoint, region) is pinned in
+# terraform/main.tf; GitHub only supplies the credentials.
 
 on:
   push:
@@ -45,8 +46,8 @@ jobs:
         working-directory: terraform
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.R2_STATE_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_STATE_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.B2_STATE_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_STATE_APP_KEY }}
       TF_IN_AUTOMATION: '1'
       TF_INPUT: '0'
     steps:
@@ -54,18 +55,10 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.17.2
 
       - name: Init
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ vars.R2_STATE_BUCKET }}" \
-            -backend-config="key=sategraph/production.tfstate" \
-            -backend-config="endpoint=${{ vars.R2_STATE_ENDPOINT }}" \
-            -backend-config="region=auto" \
-            -backend-config="skip_credentials_validation=true" \
-            -backend-config="skip_region_validation=true" \
-            -backend-config="skip_requesting_account_id=true"
+        run: terraform init
 
       - name: Format
         run: terraform fmt -check -recursive
@@ -92,8 +85,8 @@ jobs:
         working-directory: terraform
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.R2_STATE_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_STATE_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.B2_STATE_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_STATE_APP_KEY }}
       TF_IN_AUTOMATION: '1'
       TF_INPUT: '0'
     steps:
@@ -101,18 +94,10 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.17.2
 
       - name: Init
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ vars.R2_STATE_BUCKET }}" \
-            -backend-config="key=sategraph/production.tfstate" \
-            -backend-config="endpoint=${{ vars.R2_STATE_ENDPOINT }}" \
-            -backend-config="region=auto" \
-            -backend-config="skip_credentials_validation=true" \
-            -backend-config="skip_region_validation=true" \
-            -backend-config="skip_requesting_account_id=true"
+        run: terraform init
 
       - name: Apply
         run: |

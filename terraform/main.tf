@@ -4,14 +4,30 @@
 # are deployed by the CD pipeline with wrangler. There is a single production
 # environment, so this root module is applied once by the terraform pipeline.
 #
-# State lives in an R2 bucket created once as a bootstrap step; the CD
+# State lives in the B2 bucket below, created once as a bootstrap step; the CD
 # pipeline resolves the resource IDs from the Cloudflare API, so no manual
 # copy of the outputs into wrangler.toml is needed.
 
 terraform {
-  required_version = ">= 1.6"
+  required_version = ">= 1.9"
 
-  backend "s3" {}
+  # Backblaze B2 state bucket (S3-compatible); the skip flags are required
+  # because B2 does not implement the corresponding AWS APIs.
+  backend "s3" {
+    bucket = "sategraph-tfstate"
+    key    = "terraform.tfstate"
+    region = "us-east-005"
+
+    endpoints = {
+      s3 = "https://s3.us-east-005.backblazeb2.com"
+    }
+
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    use_path_style              = true
+  }
 
   required_providers {
     cloudflare = {

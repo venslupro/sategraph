@@ -232,16 +232,17 @@ Secrets:
 
 - `CLOUDFLARE_API_TOKEN` — token with D1 and KV edit rights.
 - `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID.
-- `R2_STATE_ACCESS_KEY_ID` / `R2_STATE_SECRET_ACCESS_KEY` — S3 keys for the
-  Terraform state bucket.
+- `B2_STATE_KEY_ID` / `B2_STATE_APP_KEY` — Backblaze B2 application key for
+  the Terraform state bucket.
 
-Variables: `R2_STATE_BUCKET` and `R2_STATE_ENDPOINT`
-(`https://<account id>.r2.cloudflarestorage.com`).
+The state backend (bucket, endpoint, region) is pinned in
+`terraform/main.tf`; GitHub only supplies the credentials.
 
 ### Bootstrap (once)
 
-1. Create the R2 bucket that stores Terraform state (Terraform cannot create
-   the bucket that holds its own state).
+1. Create the B2 bucket `sategraph-tfstate` in `us-east-005` (Terraform
+   cannot create the bucket that holds its own state) and an application key
+   with access to it.
 2. Run the `terraform` pipeline; it applies the D1 database and the KV
    namespace. Outputs are printed in the job summary.
 3. Add the optional runtime secrets:
