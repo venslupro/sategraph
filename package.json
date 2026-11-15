@@ -5,8 +5,9 @@
   "description": "SateGraph - public satellite knowledge graph platform",
   "type": "module",
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "app/packages/*",
+    "app/worker/*",
+    "app/page"
   ],
   "engines": {
     "node": ">=20"
@@ -19,14 +20,14 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate:local": "wrangler d1 execute sategraph --local --file=./db/migrations/0001_init.sql",
+    "db:migrate:local": "wrangler d1 execute sategraph --local --file=./app/worker/db/migrations/0001_init.sql",
     "db:seed:build": "tsx scripts/build-seed-sql.ts",
-    "db:seed:local": "npm run db:seed:build && wrangler d1 execute sategraph --local --file=./db/migrations/0002_seed.sql",
+    "db:seed:local": "npm run db:seed:build && wrangler d1 execute sategraph --local --file=./app/worker/db/migrations/0002_seed.sql",
     "db:setup:local": "npm run db:migrate:local && npm run db:seed:local",
-    "db:migrate:remote": "wrangler d1 execute sategraph --remote --file=./db/migrations/0001_init.sql",
-    "db:seed:remote": "npm run db:seed:build && wrangler d1 execute sategraph --remote --file=./db/migrations/0002_seed.sql",
-    "deploy": "npm run build && wrangler pages deploy apps/web/dist --project-name sategraph",
-    "deploy:scheduler": "wrangler deploy --config apps/scheduler/wrangler.toml"
+    "db:migrate:remote": "wrangler d1 execute sategraph --remote --file=./app/worker/db/migrations/0001_init.sql",
+    "db:seed:remote": "npm run db:seed:build && wrangler d1 execute sategraph --remote --file=./app/worker/db/migrations/0002_seed.sql",
+    "deploy": "npm run build && wrangler pages deploy app/page/dist --project-name sategraph",
+    "deploy:scheduler": "wrangler deploy --config app/worker/scheduler/wrangler.toml"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261109.1",

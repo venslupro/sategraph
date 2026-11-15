@@ -4,16 +4,17 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@sategraph/*": ["packages/*/src/index.ts"]
+      "@sategraph/*": ["app/packages/*/src/index.ts"]
     }
   },
   "include": [
-    "packages/*/src/**/*.ts",
-    "apps/api/src/**/*.ts",
-    "apps/scheduler/src/**/*.ts",
-    "apps/web/src/**/*.ts",
-    "apps/web/src/**/*.tsx",
-    "functions/**/*.ts",
+    "app/packages/*/src/**/*.ts",
+    "app/packages/*/test/**/*.ts",
+    "app/worker/api/src/**/*.ts",
+    "app/worker/scheduler/src/**/*.ts",
+    "app/page/src/**/*.ts",
+    "app/page/src/**/*.tsx",
+    "app/page/functions/**/*.ts",
     "vitest.config.ts"
   ],
   "exclude": ["node_modules", "**/dist"]

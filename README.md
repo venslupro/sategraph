@@ -55,23 +55,28 @@ Design decisions worth knowing:
 ## Repository layout
 
 ```
-apps/
-  api/            Hono + Zod application API (HTTP interface layer)
-  scheduler/      Worker + Workflows for orbit/graph refresh and backups
-  web/            React + three.js + Cytoscape front end
-packages/
-  shared-kernel/  Ids, time, geo math, confidence, result types
-  contracts/      Shared read models and API schemas
-  orbit/          OMM parsing, orbit summaries, TLE conversion
-  catalog/        Satellite aggregate, matching and merge policy
-  graph/          Relations, constellation clustering and link rules
-  publishing/     Snapshot assembly and read-model keys
-  ingestion/      Source adapters, health and Cypher import
-  infra/          KV/D1/Neo4j/B2/LLM adapters, seed runtime, caches
-db/migrations/    D1 schema and generated seed data
-curation/         Human-curated relations (relays, dockings, formations)
-functions/        Cloudflare Pages Functions entry point
-scripts/          Build-time tooling (seed SQL generator)
+app/
+  page/                    Cloudflare Pages site (front end + Functions)
+    src/                   React + three.js + Cytoscape UI
+    functions/api/         Pages Functions entry -> the API worker app
+    public/curation/       Human-curated relations, deployed with the site
+    wrangler.toml          Pages bindings (KV, D1, Workers AI)
+  worker/
+    api/                   Hono + Zod read-only API (Pages Functions backend)
+    scheduler/             Cron Worker + Workflows (orbit, graph, backup)
+    db/migrations/         D1 schema and generated seed data
+  packages/                Bounded contexts, hexagonal layers
+    shared-kernel/         Ids, time, geo math, confidence, result types
+    contracts/             Published language: read models and API schemas
+    catalog/               Satellite aggregate, matching and merge policy
+    orbit/                 OMM parsing, orbit summaries, TLE conversion
+    graph/                 Relations, constellation clustering, link rules
+    ingestion/             Source adapters, health and Cypher import
+    publishing/            Snapshot assembly and read-model keys
+    assistant/             Agent orchestration, tools, grounding
+    infra/                 KV/D1/Neo4j/B2/LLM adapters, seed runtime, caches
+terraform/               Cloudflare resources (D1, KV, Turnstile)
+scripts/                 Build-time tooling (seed SQL generator)
 ```
 
 ## Requirements
@@ -100,7 +105,7 @@ Useful commands:
 ```bash
 npm run typecheck        # strict TypeScript across every workspace
 npm test                 # unit, domain and API route tests
-npm run build            # production web bundle in apps/web/dist
+npm run build            # production web bundle in app/page/dist
 npm run db:setup:local   # D1 schema + seed rows in the local Miniflare database
 ```
 
@@ -160,22 +165,22 @@ secrets on both the Pages project and the scheduler worker:
 npx wrangler pages secret put NEO4J_HTTP_URL --project-name sategraph
 npx wrangler pages secret put NEO4J_USER --project-name sategraph
 npx wrangler pages secret put NEO4J_PASSWORD --project-name sategraph
-npx wrangler secret put NEO4J_HTTP_URL --config apps/scheduler/wrangler.toml
-npx wrangler secret put NEO4J_USER --config apps/scheduler/wrangler.toml
-npx wrangler secret put NEO4J_PASSWORD --config apps/scheduler/wrangler.toml
+npx wrangler secret put NEO4J_HTTP_URL --config app/worker/scheduler/wrangler.toml
+npx wrangler secret put NEO4J_USER --config app/worker/scheduler/wrangler.toml
+npx wrangler secret put NEO4J_PASSWORD --config app/worker/scheduler/wrangler.toml
 # NEO4J_DATABASE is optional and defaults to "neo4j".
 ```
 
 ## Database
 
-`db/migrations/0001_init.sql` creates the D1 read projection:
+`app/worker/db/migrations/0001_init.sql` creates the D1 read projection:
 
 - `satellite_search` – one row per satellite, including the full catalog entry
 - `domain_event` – recent graph/ops events
 - `agent_run` – assistant runs for auditing and shares
 - `alert` – source health and data-quality alerts
 
-`db/migrations/0002_seed.sql` is generated from the deterministic seed snapshot:
+`app/worker/db/migrations/0002_seed.sql` is generated from the deterministic seed snapshot:
 
 ```bash
 npm run db:seed:build    # regenerate the migration
@@ -250,7 +255,7 @@ The state backend (bucket, endpoint, region) is pinned in
    ```bash
    npx wrangler pages secret put NEO4J_PASSWORD --project-name sategraph
    npx wrangler pages secret put TURNSTILE_SECRET --project-name sategraph
-   npx wrangler secret put ADMIN_TOKEN --config apps/scheduler/wrangler.toml
+   npx wrangler secret put ADMIN_TOKEN --config app/worker/scheduler/wrangler.toml
    ```
 
 After that every merge to `main` goes CI → CD. The CD pipeline resolves the

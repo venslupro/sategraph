@@ -1,7 +1,7 @@
 /**
- * Generates `db/migrations/0002_seed.sql` from the deterministic seed snapshot.
- * The migration only touches the D1 search projection and event log; graph
- * data is published to Neo4j by the scheduler.
+ * Generates `app/worker/db/migrations/0002_seed.sql` from the deterministic
+ * seed snapshot. The migration only touches the D1 search projection and
+ * event log; graph data is published to Neo4j by the scheduler.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { buildReadModels, buildSeedSnapshot } from '@sategraph/publishing';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUTPUT = join(ROOT, 'db', 'migrations', '0002_seed.sql');
+const OUTPUT = join(ROOT, 'app', 'worker', 'db', 'migrations', '0002_seed.sql');
 
 function text(value: string | null | undefined): string {
   if (value === null || value === undefined) {

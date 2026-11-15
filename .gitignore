@@ -7,7 +7,7 @@ dist/
 .DS_Store
 coverage/
 *.tsbuildinfo
-apps/web/dist/
+app/page/dist/
 
 # Terraform
 terraform/.terraform/

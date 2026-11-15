@@ -52,8 +52,8 @@ jobs:
             echo "::error::D1 database 'sategraph' or KV namespace 'sategraph-kv' is missing. Run the terraform pipeline first."
             exit 1
           fi
-          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/${d1_id}/" wrangler.toml apps/scheduler/wrangler.toml
-          sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/${kv_id}/" wrangler.toml apps/scheduler/wrangler.toml
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/${d1_id}/" app/page/wrangler.toml app/worker/scheduler/wrangler.toml
+          sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/${kv_id}/" app/page/wrangler.toml app/worker/scheduler/wrangler.toml
           {
             echo "### Bindings"
             echo "- D1: ${d1_id}"
@@ -78,4 +78,5 @@ jobs:
         run: npm run deploy:scheduler
 
       - name: Deploy frontend and API (Pages Functions)
-        run: npx wrangler pages deploy apps/web/dist --project-name sategraph --branch main
+        working-directory: app/page
+        run: npx wrangler pages deploy dist --project-name sategraph --branch main
