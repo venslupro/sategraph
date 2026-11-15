@@ -1,0 +1,20 @@
+{
+  "name": "@sategraph/infra",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@sategraph/catalog": "1.0.0",
+    "@sategraph/contracts": "1.0.0",
+    "@sategraph/graph": "1.0.0",
+    "@sategraph/orbit": "1.0.0",
+    "@sategraph/publishing": "1.0.0",
+    "@sategraph/shared-kernel": "1.0.0",
+    "aws4fetch": "^1.0.20"
+  }
+}
