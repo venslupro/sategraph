@@ -1,0 +1,24 @@
+{
+  "name": "satgraph",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "公开卫星信息与关系图谱交互原型",
+  "scripts": {
+    "start": "node scripts/preview.js",
+    "build:pages": "node scripts/build_pages.js",
+    "config:workers": "node scripts/worker_configs.js",
+    "a2": "node scripts/a2.js",
+    "snapshots": "node scripts/compare_snapshots.js",
+    "test": "node --test tests/*.test.js",
+    "typecheck": "tsc -p tsconfig.validation.json && tsc -p tsconfig.workers.json"
+  },
+  "dependencies": {
+    "satellite.js": "7.2.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260702.1",
+    "miniflare": "4.20260730.0",
+    "typescript": "5.9.3"
+  }
+}
