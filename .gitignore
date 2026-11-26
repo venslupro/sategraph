@@ -9,6 +9,7 @@
 .trae/
 .claude/
 .cursor/
+.monkeycode/
 .aider*
 CLAUDE.md
 AGENTS.md

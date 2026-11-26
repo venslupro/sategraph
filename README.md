@@ -16,7 +16,7 @@
 | scripts/validation | 离线及隔离环境验证工具，不是部署服务 |
 | infra/terraform | 独立 Cloudflare 资源及模拟计划测试 |
 | scripts、tests | 构建、预览、配置生成与离线回归 |
-| docs/design、docs/reference | 正式方案与 PRD、视觉参考和历史原型资料；不会进入公开资源目录 |
+| docs/reference | 视觉参考和历史原型资料；不会进入公开资源目录 |
 
 ## 本地开发
 
@@ -78,7 +78,7 @@ Deploy 发布内部 Worker 后应用未执行的 D1 迁移、核验已实现的�
 
 ## 验收边界
 
-设计 §6.2.1 的六个 Worker 已有本地入口：api-gateway、data、sync、projector、graph、assistant；静态 Pages 另计。存在本地入口不表示已部署。
+六个 Worker 已有本地入口：api-gateway、data、sync、projector、graph、assistant；静态 Pages 另计。存在本地入口不表示已部署。
 
 底部输入与展开面板共用内存会话。选择“手动查询与访问验证”可单独查目录或已有场景；缺少在线服务时不会返回演示答案。只有点击验证才加载 Turnstile；验证后由用户重新提交，不自动重放。助手默认不配置 AI 绑定或 `APPROVED_MODEL`，不会调用模型。候选模型未经目标账号免费资格、许可及中文工具能力验收，不应启用。每个请求最多四次模型推理、八次工具读取；取消只阻止后续步骤，不保证已发推理停止或退回消耗。
 
@@ -90,4 +90,4 @@ Deploy 发布内部 Worker 后应用未执行的 D1 迁移、核验已实现的�
 
 目录读取默认关闭所有来源：仅在获得展示许可后，才在对应 data 环境配置 DISPLAY_SOURCES（逗号分隔的来源 ID）。API 网关仅转发已验证会话的目录 GET 请求，不转发会话或鉴权头。datasets/current 只指向已完整入库的轨道输入，不是整轮成功指针。命名入口隔离由应用和绑定保证，不等同于数据库表级权限。可运行 node --test tests/catalog_rpc.test.js 复验，无需启动预览。
 
-实施清单见 .monkeycode/specs/sategraph/tasklist.md。日更按归档、预检、分批入库、投影和封存推进；只有确认提交才前移断点。投影排空不等于发布成功：在 D 阶段发布清单和恢复材料验收前，正常排空仍以 PUBLICATION_NOT_VERIFIED 结束，不推进成功指针。
+日更按归档、预检、分批入库、投影和封存推进；只有确认提交才前移断点。投影排空不等于发布成功：在 D 阶段发布清单和恢复材料验收前，正常排空仍以 PUBLICATION_NOT_VERIFIED 结束，不推进成功指针。
