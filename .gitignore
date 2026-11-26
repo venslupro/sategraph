@@ -4,3 +4,11 @@
 *.tfstate
 *.tfstate.*
 *.tfplan
+
+# AI assistant records
+.trae/
+.claude/
+.cursor/
+.aider*
+CLAUDE.md
+AGENTS.md
