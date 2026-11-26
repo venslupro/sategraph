@@ -16,19 +16,18 @@
 | scripts/validation | 离线及隔离环境验证工具，不是部署服务 |
 | infra/terraform | 独立 Cloudflare 资源及模拟计划测试 |
 | scripts、tests | 构建、预览、配置生成与离线回归 |
-| docs/reference | 视觉参考和历史原型资料；不会进入公开资源目录 |
 
 ## 本地开发
 
 src/ 的每个直接子目录对应一个服务。每个 Worker 的入口 index.ts 和绑定模板 wrangler.template.jsonc 同目录；新增私有模块放回所属服务。Pages 的浏览器 Web Worker 是页面资源，不单独部署。
 
-使用 Node.js 24 和锁定的依赖。运行 npm ci 后，npm start 在回环地址启动基于 Miniflare 的静态预览；PORT 可覆盖默认端口 8765。npm run build:pages 把可发布的公开资源输出到打印的新目录，不复制工作区、账号信息或本地快照。历史 Python 服务不是开发或部署入口。
+使用 Node.js 24 和锁定的依赖。运行 npm ci 后，npm start 在回环地址启动基于 Miniflare 的静态预览；PORT 可覆盖默认端口 8765。npm run build:pages 把可发布的公开资源输出到打印的新目录，不复制工作区、账号信息或本地快照。
 
 Pages 的一方脚本位于 `src/sg-pages`，使用 TypeScript；图层和目录行由 React 组件绘制，轨道传播在独立 Web Worker 内执行。修改后运行 `npm run typecheck:pages` 检查浏览器和 Worker 两个环境，运行 `npm run build:pages` 生成静态 HTML、CSS、两个浏览器 JS 入口和公开资源。预览不需要外部 CDN；在线查询仍需同源网关。本地 OMM 不上传，工作台状态不自动保存。
 
 - npm run typecheck：校验 Workers 和验证程序。
 - npm test：运行本地测试；D1 和 Durable Objects 测试使用临时实例，外部写入使用模拟适配器。
-- 运行 `npm run format` 修正一方源码，`npm run style:check` 只检查、不写文件；CI 执行同一检查。JS/TS 使用根目录 `.clang-format` 的 Google 预设，ESLint 检查控制语句花括号、变量声明及 const/let；TSX、HTML 和 CSS 使用支持这些语法的 Prettier。CSS 只在构建产物中压缩。范围限于一方代码，不包含依赖、构建产物和历史参考资料。
+- 运行 `npm run format` 修正一方源码，`npm run style:check` 只检查、不写文件；CI 执行同一检查。JS/TS 使用根目录 `.clang-format` 的 Google 预设，ESLint 检查控制语句花括号、变量声明及 const/let；TSX、HTML 和 CSS 使用支持这些语法的 Prettier。CSS 只在构建产物中压缩。范围限于一方代码，不包含依赖和构建产物。
 
 ## 资源与部署边界
 
