@@ -2,7 +2,7 @@ mock_provider "cloudflare" {}
 
 variables {
   account_id      = "00000000000000000000000000000000"
-  environment     = "dev"
+  environment     = "prd"
   public_hostname = "sategraph.example.test"
   existing_services = {
     b2_bucket_id   = "000000000000000000000000"
@@ -15,9 +15,30 @@ run "resource_contract" {
   command = plan
 
   assert {
-    condition     = cloudflare_d1_database.core.name == "sategraph-dev-core" && cloudflare_turnstile_widget.access.mode == "managed" && contains(cloudflare_turnstile_widget.access.domains, var.public_hostname)
-    error_message = "D1 命名或 Turnstile 作用域不符合约定。"
+    condition = (
+      cloudflare_d1_database.core.name == "sategraph-prd-core" &&
+      cloudflare_turnstile_widget.access.name == "sategraph-prd-access" &&
+      cloudflare_turnstile_widget.access.mode == "managed" &&
+      contains(cloudflare_turnstile_widget.access.domains, var.public_hostname)
+    )
+    error_message = "生产资源命名或 Turnstile 作用域不符合约定。"
   }
+}
+
+run "reject_staging" {
+  command = plan
+  variables {
+    environment = "stg"
+  }
+  expect_failures = [var.environment]
+}
+
+run "reject_legacy_environment" {
+  command = plan
+  variables {
+    environment = "prod"
+  }
+  expect_failures = [var.environment]
 }
 
 run "reject_wildcard" {

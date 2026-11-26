@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {assistantRequest, MODEL} from '../src/sg-assistant/assistant.ts';
-import {askAssistant} from '../src/sg-pages/online_client.js';
+import {askAssistant} from '../src/sg-pages/online_client.ts';
 
 const origin = 'https://assistant.example.test';
 const url = origin + '/api/v1/assistant/query';
@@ -28,7 +28,8 @@ const req = (input = body, extra = {}) => new Request(url, {
 const call = (name, args = {}) => ({name, args});
 function fixture(plans, reply = () => Response.json({objects_with_orbit: 2})) {
   let model = 0;
-  const reads = [], messages = [];
+  const reads = [];
+  const messages = [];
   const store = unit => ({
     fetch(r) {
       reads.push({unit, r});
@@ -42,7 +43,9 @@ function fixture(plans, reply = () => Response.json({objects_with_orbit: 2})) {
         assert.equal(modelId, MODEL);
         messages.push(JSON.parse(options.messages[1].content));
         const p = plans[model++];
-        if (p instanceof Error) throw p;
+        if (p instanceof Error) {
+          throw p;
+        }
         return {response: typeof p === 'function' ? await p() : p};
       }
     },
@@ -59,11 +62,12 @@ test(
     '未批准的模型不执行；拒绝无效版本、额外参数、超长历史和超大请求',
     async () => {
       const f = fixture([]);
-      for (const policy of ['', 'not-approved'])
+      for (const policy of [undefined, '', 'not-approved']) {
         assert.equal(
             (await assistantRequest(req(), {...f.env, APPROVED_MODEL: policy}))
                 .status,
             503);
+      }
       for (const input
                of [{...body, context_revision: -1},
                    {...body, message: 'x'.repeat(2001)}, {...body, extra: 1},
@@ -71,8 +75,9 @@ test(
                      ...body,
                      history: Array(7).fill({role: 'user', text: '旧问题'})
                    },
-                   {...body, context: {url: origin}}])
+                   {...body, context: {url: origin}}]) {
         assert.equal((await assistantRequest(req(input), f.env)).status, 422);
+      }
       assert.equal(
           (await assistantRequest(
                req({...body, message: 'x'.repeat(20000)}), f.env))
@@ -175,7 +180,9 @@ test(
         const ev = await events(f, {...body, context});
         assert.equal(f.reads[0].unit, 'GRAPH');
         assert.equal(ev.some(e => e.event === 'view_action'), action);
-        if (rev !== 7) assert.equal(code(ev), 'TOOL_INCOMPLETE');
+        if (rev !== 7) {
+          assert.equal(code(ev), 'TOOL_INCOMPLETE');
+        }
       }
     });
 
@@ -220,8 +227,9 @@ test('上游失败或重定向不重试；只保留成功部分，不编造完�
 
 test('截止、请求取消及流取消均阻止迟到推理触发后续读取', async () => {
   for (const kind of ['deadline', 'request', 'stream']) {
-    const gate = Promise.withResolvers(), started = Promise.withResolvers(),
-          controller = new AbortController();
+    const gate = Promise.withResolvers();
+    const started = Promise.withResolvers();
+    const controller = new AbortController();
     const f = fixture([() => {
       started.resolve();
       return gate.promise;
@@ -236,13 +244,16 @@ test('截止、请求取消及流取消均阻止迟到推理触发后续读取',
           req(body, {signal: controller.signal, headers}), f.env,
           kind === 'deadline' ? 20 : 1000);
       await started.promise;
-      if (kind === 'request') controller.abort();
-      if (kind === 'stream')
+      if (kind === 'request') {
+        controller.abort();
+      }
+      if (kind === 'stream') {
         await (await pending).body.cancel();
-      else
+      } else {
         assert.equal(
             code((await (await pending).json()).events),
             kind === 'request' ? 'CANCELLED' : 'TIMEOUT');
+      }
       gate.resolve({calls: [call('catalog_statistics')]});
       await new Promise(resolve => setImmediate(resolve));
       assert.equal(f.models(), 1);

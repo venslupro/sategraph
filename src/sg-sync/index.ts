@@ -8,7 +8,7 @@ interface Env {
   COORDINATOR: DurableObjectNamespace<UpdateCoordinator>;
   CORE?: D1Database;
   PROJECTOR?: Ports['projector'];
-  FACTS?: {commit:NonNullable<Ports['commitGp']>};
+  FACTS?: {commit: NonNullable<Ports['commitGp']>};
   B2_BUCKET_ID: string;
   B2_KEY_ID: string;
   B2_APP_KEY: string;
@@ -23,12 +23,14 @@ export class UpdateCoordinator extends DurableObject<Env> {
   }
   alarm() {
     const {CORE, PROJECTOR, B2_BUCKET_ID, B2_KEY_ID, B2_APP_KEY} = this.env;
-    const facts=this.env.FACTS;
-    if (!CORE || !PROJECTOR || !facts || !B2_BUCKET_ID || !B2_KEY_ID || !B2_APP_KEY)
+    const facts = this.env.FACTS;
+    if (!CORE || !PROJECTOR || !facts || !B2_BUCKET_ID || !B2_KEY_ID ||
+        !B2_APP_KEY) {
       return resume(this.ctx.storage);
+    }
     const ports: Ports = {
       db: CORE,
-      commitGp:(w,c,bytes)=>facts.commit(w,c,bytes),
+      commitGp: (w, c, bytes) => facts.commit(w, c, bytes),
       projector: PROJECTOR,
       archive: () => authorizeArchive(B2_BUCKET_ID, B2_KEY_ID, B2_APP_KEY)
     };

@@ -5,8 +5,8 @@ import test from 'node:test';
 import {projectAt} from '../src/sg-projector/advance.ts';
 import {snapshot} from '../src/sg-projector/journal.ts';
 import {admit, DAILY_CRON, readStatus, resume} from '../src/sg-sync/coordinator.ts';
-import {runStage} from '../src/sg-sync/pipeline.ts';
 import {commitGpChunk} from '../src/sg-sync/gp_ingest.ts';
+import {runStage} from '../src/sg-sync/pipeline.ts';
 import {fetchSnapshot} from '../src/sg-sync/source_snapshot.ts';
 
 import {instance, setupProjection} from './projector_fixture.js';
@@ -31,7 +31,9 @@ async function fixture(t, fault) {
   // 预置较早代际，测试下一日换代，不复用测试夹具的运行身份。
   const store = controlStore();
   await store.put('current', {writer_epoch: 1, run_status: 'FAILED'});
-  for (const name of ['0003_source_archive.sql', '0004_gp_manifest.sql', '0005_catalog.sql']) {
+  for (const name
+           of ['0003_source_archive.sql', '0004_gp_manifest.sql',
+               '0005_catalog.sql']) {
     const sql = await readFile(
         new URL('../src/sg-sync/storage/migrations/' + name, import.meta.url),
         'utf8');
@@ -59,7 +61,9 @@ async function fixture(t, fault) {
     apply: async (w, chunk) => {
       calls.writes++;
       assert.equal(proof.cursor, chunk.base.cursor);
-      if (fault === 'before') throw Error('模拟图写入前断线');
+      if (fault === 'before') {
+        throw Error('模拟图写入前断线');
+      }
       proof = {instance, ...w, ...chunk.end};
       if (fault === 'after') {
         fault = '';
@@ -109,8 +113,9 @@ test(
     '定时运行串联 101 条记录；D1 提交后进程中断和图回执丢失均不重复写，未发布不报成功',
     async t => {
       const {store, db, ports, clock, calls, tick} = await fixture(t, 'after');
-      for (const stage of ['archive', 'index', 'ingest'])
+      for (const stage of ['archive', 'index', 'ingest']) {
         assert.equal((await tick()).stage, stage);
+      }
       const saved = await store.get('current');
       const op = [saved.run_id, saved.attempt_no, saved.checkpoint].join(':');
       await store.put(
@@ -124,7 +129,9 @@ test(
       let state;
       for (let i = 0; i < 10; i++) {
         state = await tick(clock + 60000);
-        if (state.run_status !== 'RUNNING') break;
+        if (state.run_status !== 'RUNNING') {
+          break;
+        }
       }
       assert.equal(state.error, 'PUBLICATION_NOT_VERIFIED');
       assert.equal(state.data_quality, 'PARTIAL');
@@ -144,8 +151,11 @@ test(
 
 test('无法证明图端提交时标记未知，保留待确认批且不重发', async t => {
   const {db, store, calls, tick} = await fixture(t, 'before');
-  for (let i = 0; i < 12; i++)
-    if ((await tick()).run_status !== 'RUNNING') break;
+  for (let i = 0; i < 12; i++) {
+    if ((await tick()).run_status !== 'RUNNING') {
+      break;
+    }
+  }
   const state = await readStatus(store);
   assert.equal(state.run_status, 'FAILED');
   assert.equal(state.data_quality, 'UNKNOWN');

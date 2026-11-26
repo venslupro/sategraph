@@ -7,8 +7,8 @@ import ts from 'typescript';
 import {issueCookie} from '../src/sg-api-gateway/session.ts';
 
 const root = new URL('../src/', import.meta.url);
-const config = async role =>
-    JSON.parse(await readFile(new URL(role + '/wrangler.jsonc', root), 'utf8'));
+const config = async role => JSON.parse(
+    await readFile(new URL(role + '/wrangler.template.jsonc', root), 'utf8'));
 async function modules(paths) {
   return Promise.all(paths.map(
       async path => ({
@@ -34,7 +34,8 @@ test(
       const keys = JSON.stringify({
         current: {id: 'test', secret: Buffer.alloc(32, 2).toString('base64url')}
       });
-      let calls = 0, redirect = false;
+      let calls = 0;
+      let redirect = false;
       const mf = new Miniflare({
         cf: false,
         workers: [
@@ -69,11 +70,12 @@ test(
               assert.equal(
                   req.url,
                   'https://fixture.databases.neo4j.io/db/neo4j/query/v2');
-              if (redirect)
+              if (redirect) {
                 return new Response(null, {
                   status: 307,
                   headers: {location: 'https://refused.example.test/'}
                 });
+              }
               assert.equal(req.headers.get('cookie'), null);
               assert.equal(req.headers.get('authorization'), 'Basic dGVzdA==');
               const input = await req.json();

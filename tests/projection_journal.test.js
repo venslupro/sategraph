@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {activateWriter} from '../src/sg-sync/storage/orbit_store.ts';
 import {makeChunk, MAX_ROWS} from '../src/sg-projector/chunk.ts';
 import {acknowledge, reserve, snapshot, takeOver} from '../src/sg-projector/journal.ts';
+import {activateWriter} from '../src/sg-sync/storage/orbit_store.ts';
 
 import {instance, setupProjection, writer} from './projector_fixture.js';
 
@@ -12,8 +12,9 @@ const proof = (w, c) =>
 
 test('一个流仅可预留一批，同一实体的连续修订拆批且不越序', async t => {
   const {db, append} = await setupProjection(t);
-  for (const [id, revision] of [['A', 1], ['B', 1], ['A', 2]])
+  for (const [id, revision] of [['A', 1], ['B', 1], ['A', 2]]) {
     await append(id, revision);
+  }
   const {chunk} = await snapshot(db, writer, instance);
   assert.deepEqual(chunk.rows.map(r => r.event_seq), [1, 2]);
   assert.deepEqual(

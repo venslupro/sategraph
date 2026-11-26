@@ -1,5 +1,5 @@
 {
-  "name": "satgraph",
+  "name": "sategraph",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -10,15 +10,27 @@
     "config:workers": "node scripts/worker_configs.js",
     "a2": "node scripts/a2.js",
     "snapshots": "node scripts/compare_snapshots.js",
+    "format": "eslint src scripts tests eslint.config.js --fix && node scripts/format.js --write",
+    "style:check": "eslint src scripts tests eslint.config.js && node scripts/format.js",
     "test": "node --test tests/*.test.js",
-    "typecheck": "tsc -p tsconfig.validation.json && tsc -p tsconfig.workers.json"
+    "typecheck:pages": "tsc -p tsconfig.pages.json && tsc -p tsconfig.pages-worker.json",
+    "typecheck": "tsc -p tsconfig.validation.json && tsc -p tsconfig.workers.json && npm run typecheck:pages"
   },
   "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "satellite.js": "7.2.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260702.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@typescript-eslint/parser": "8.71.2",
+    "@wasm-fmt/clang-format": "23.1.1",
+    "esbuild": "0.28.2",
+    "eslint": "10.15.0",
     "miniflare": "4.20260730.0",
+    "prettier": "3.9.10",
     "typescript": "5.9.3"
   }
 }

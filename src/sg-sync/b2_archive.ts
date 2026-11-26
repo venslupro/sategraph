@@ -36,7 +36,9 @@ function token(value: unknown): string {
 }
 
 function endpoint(value: unknown, upload: boolean): string {
-  if (typeof value !== 'string') throw new Error('B2_INVALID_ENDPOINT');
+  if (typeof value !== 'string') {
+    throw new Error('B2_INVALID_ENDPOINT');
+  }
   const url = new URL(value);
   const valid = upload ?
       /^(?:pod-[a-z0-9-]+|api[0-9]+)\.(?:backblazeb2|backblaze)\.com$/.test(
@@ -64,7 +66,9 @@ async function request(
     send: Send, url: string, init: RequestInit): Promise<Json> {
   const response = await send(
       url, {...init, redirect: 'manual', signal: AbortSignal.timeout(30000)});
-  if (!response.ok) throw new Error('B2_HTTP_' + response.status);
+  if (!response.ok) {
+    throw new Error('B2_HTTP_' + response.status);
+  }
   return record(await response.json());
 }
 
@@ -72,8 +76,9 @@ function fileId(file: Json, bucket: string, input: ArchiveIdentity): string {
   if (file.action !== 'upload' || file.bucketId !== bucket ||
       file.fileName !== key(input) || file.contentLength !== input.byteLength ||
       file.contentSha1 !== input.sha1 ||
-      record(file.fileInfo).sha256 !== input.sha256)
+      record(file.fileInfo).sha256 !== input.sha256) {
     throw new Error('B2_PROOF_MISMATCH');
+  }
   return token(file.fileId);
 }
 
@@ -98,8 +103,9 @@ export async function authorizeArchive(
       !['listFiles', 'writeFiles'].every(cap => caps.includes(cap)) ||
       (allowed.namePrefix != null &&
        (typeof allowed.namePrefix !== 'string' ||
-        !ARCHIVE_PREFIX.startsWith(allowed.namePrefix))))
+        !ARCHIVE_PREFIX.startsWith(allowed.namePrefix)))) {
     throw new Error('B2_KEY_SCOPE_MISMATCH');
+  }
   const apiUrl = endpoint(api.apiUrl, false);
   const accountToken = token(auth.authorizationToken);
   const call = (method: string, data: Json) =>
@@ -114,15 +120,17 @@ export async function authorizeArchive(
     async readRange(version, start, end) {
       if (!caps.includes('readFiles') || version.bucketId !== bucketId ||
           typeof api.downloadUrl !== 'string' ||
-          !/^https:[/][/]f[0-9]+[.]backblazeb2[.]com$/.test(api.downloadUrl))
+          !/^https:[/][/]f[0-9]+[.]backblazeb2[.]com$/.test(api.downloadUrl)) {
         throw new Error('B2_DOWNLOAD_SCOPE');
+      }
       if (!version.fileId || version.fileId.length > 256 ||
           ![version.byteLength, start, end].every(Number.isSafeInteger) ||
           version.byteLength > MAX_INPUT_BYTES || start < 0 || end <= start ||
-          end > version.byteLength)
+          end > version.byteLength) {
         throw new Error('B2_INVALID_RANGE');
-      const entire = start === 0 && end === version.byteLength,
-            size = end - start;
+      }
+      const entire = start === 0 && end === version.byteLength;
+      const size = end - start;
       const res = await send(
           api.downloadUrl + '/b2api/v4/b2_download_file_by_id?fileId=' +
               encodeURIComponent(version.fileId),
@@ -146,12 +154,15 @@ export async function authorizeArchive(
         await res.body?.cancel();
         throw new Error('B2_RANGE_MISMATCH');
       }
-      const data = new Uint8Array(size), reader = res.body.getReader();
+      const data = new Uint8Array(size);
+      const reader = res.body.getReader();
       let offset = 0;
       try {
         while (true) {
           const {done, value} = await reader.read();
-          if (done) break;
+          if (done) {
+            break;
+          }
           if (offset + value.length > size) {
             await reader.cancel();
             throw new Error('B2_RANGE_MISMATCH');
@@ -162,7 +173,9 @@ export async function authorizeArchive(
       } finally {
         reader.releaseLock();
       }
-      if (offset !== size) throw new Error('B2_RANGE_MISMATCH');
+      if (offset !== size) {
+        throw new Error('B2_RANGE_MISMATCH');
+      }
       return data;
     },
     async find(input) {
@@ -171,20 +184,26 @@ export async function authorizeArchive(
           'b2_list_file_versions',
           {bucketId, prefix: name, startFileName: name, maxFileCount: 2});
       if (!Array.isArray(result.files) || result.nextFileName === name ||
-          !Object.hasOwn(result, 'nextFileName'))
+          !Object.hasOwn(result, 'nextFileName')) {
         throw new Error('B2_AMBIGUOUS_VERSION');
+      }
       const files =
           result.files.map(record).filter(file => file.fileName === name);
-      if (files.length > 1) throw new Error('B2_AMBIGUOUS_VERSION');
+      if (files.length > 1) {
+        throw new Error('B2_AMBIGUOUS_VERSION');
+      }
       const [match] = files;
       return match ? fileId(match, bucketId, input) : null;
     },
     async upload(input, bytes) {
       const name = key(input);
-      if (bytes.byteLength !== input.byteLength)
+      if (bytes.byteLength !== input.byteLength) {
         throw new Error('INVALID_ARCHIVE_LENGTH');
+      }
       const target = await call('b2_get_upload_url', {bucketId});
-      if (target.bucketId !== bucketId) throw new Error('B2_BUCKET_MISMATCH');
+      if (target.bucketId !== bucketId) {
+        throw new Error('B2_BUCKET_MISMATCH');
+      }
       const uploaded = await request(send, endpoint(target.uploadUrl, true), {
         method: 'POST',
         headers: {

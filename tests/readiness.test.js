@@ -60,9 +60,10 @@ test('未关闭的事务即使带书签也不算提交成功', async () => {
   };
   let calls = 0;
   const send = async (url, init) => {
-    if (++calls === 1)
+    if (++calls === 1) {
       return Response.json(
           opened, {headers: {'neo4j-cluster-affinity': 'node'}});
+    }
     assert.equal(init.body, undefined);
     return Response.json({transaction: {id: 'tx'}, bookmarks: ['bm']});
   };

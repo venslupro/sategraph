@@ -49,7 +49,9 @@ export async function activateWriter(db: D1Database, writer: Writer) {
               'WHERE excluded.writer_epoch > command_control.writer_epoch RETURNING active')
           .bind(writer.runId, writer.epoch)
           .first();
-  if (row) return;
+  if (row) {
+    return;
+  }
   if (!await db
            .prepare(
                'SELECT 1 FROM command_control WHERE singleton=1 ' +
@@ -101,8 +103,9 @@ async function encodeOrbit(command: OrbitCommand) {
   if (typeof command.operationId !== 'string' ||
       !ID.test(command.operationId) ||
       !Number.isSafeInteger(command.expectedRevision) ||
-      command.expectedRevision < 0)
+      command.expectedRevision < 0) {
     throw new Error('INVALID_ORBIT_COMMAND');
+  }
   return orbitPayload(command);
 }
 
@@ -110,8 +113,9 @@ function matchReceipt(row: Receipt, cmd: OrbitCommand, hash: string) {
   if (row.run_id !== cmd.writer.runId ||
       row.writer_epoch !== cmd.writer.epoch || row.entity_id !== cmd.entityId ||
       row.expected_revision !== cmd.expectedRevision ||
-      row.epoch_us !== cmd.epochUs || row.payload_hash !== hash)
+      row.epoch_us !== cmd.epochUs || row.payload_hash !== hash) {
     throw new Error('OPERATION_CONFLICT');
+  }
   return {outcome: row.outcome, revision: row.revision};
 }
 
@@ -165,7 +169,9 @@ export async function applyOrbit(db: D1Database, cmd: OrbitCommand) {
   const result = await db.batch<Record<string, unknown>>(
       [receipt, fact, event, read, guard]);
   const row = result[3]!.results[0] as unknown as Receipt | undefined;
-  if (row) return matchReceipt(row, cmd, hash);
+  if (row) {
+    return matchReceipt(row, cmd, hash);
+  }
   const owner = result[4]!.results[0];
   if (owner?.run_id !== writer.runId || owner.writer_epoch !== writer.epoch ||
       owner.active !== 1) {

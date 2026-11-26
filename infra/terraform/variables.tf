@@ -9,12 +9,12 @@ variable "account_id" {
 }
 
 variable "environment" {
-  description = "环境名；不同环境必须使用独立的 state。"
+  description = "唯一可部署的资源环境：prd（生产）。"
   type        = string
 
   validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "环境须为 dev、staging 或 prod。"
+    condition     = var.environment == "prd"
+    error_message = "只允许创建 prd 生产资源。"
   }
 }
 

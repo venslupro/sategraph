@@ -16,8 +16,9 @@ test(
       assert.ok(Number(port) <= 65535);
       const endpoint = 'http://127.0.0.1:' + port + '/db/neo4j/query/v2/tx';
       const headers = {'content-type': 'application/json'};
-      if (process.env.SATEGRAPH_F1_AUTH)
+      if (process.env.SATEGRAPH_F1_AUTH) {
         headers.authorization = process.env.SATEGRAPH_F1_AUTH;
+      }
       const send = async (url, body, method = 'POST') => {
         const res = await fetch(url, {
           method,
@@ -27,7 +28,9 @@ test(
           body: body === undefined ? undefined : JSON.stringify(body)
         });
         assert.ok(res.ok, '本机 Query API 返回 ' + res.status);
-        if (method === 'DELETE') return;
+        if (method === 'DELETE') {
+          return;
+        }
         const b = await res.json();
         assert.deepEqual(b.errors ?? [], []);
         return b;
@@ -41,8 +44,9 @@ test(
       const url = endpoint + '/' + tx;
       const query = async (statement, parameters = {}) =>
           (await send(url, {statement, parameters})).data.values;
-      const from = 'T-A', to = 'T-B',
-            scope = ['T-A', 'T-B', 'T-C', 'T-D', 'T-E'];
+      const from = 'T-A';
+      const to = 'T-B';
+      const scope = ['T-A', 'T-B', 'T-C', 'T-D', 'T-E'];
       const input = {
         from,
         to,
@@ -52,11 +56,14 @@ test(
         model_version: 'v1',
         analysis_time: '2026-01-01T00:00:00Z'
       };
-      const at = Date.parse(input.analysis_time), instance = 'F1-only',
-            sources = ['fixture'];
+      const at = Date.parse(input.analysis_time);
+      const instance = 'F1-only';
+      const sources = ['fixture'];
       async function run(op, overrides = {}) {
         const data = {...input, ...overrides};
-        if (op === 'neighbors' || op === 'degree') delete data.to;
+        if (op === 'neighbors' || op === 'degree') {
+          delete data.to;
+        }
         const p = policy(op, data);
         const [[r]] = await query(
             analysisTemplate(op, p), {...p, instance, sources, now: at});

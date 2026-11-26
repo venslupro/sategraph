@@ -1,165 +1,498 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#040913">
-  <meta name="description" content="SatGraph 公开卫星信息与关系图谱，探索卫星系统、轨道与有来源的关系。">
-  <title>SatGraph · 公开卫星知识图谱</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%23040913' stroke='%233fd0ff'/%3E%3Cellipse cx='16' cy='16' rx='15' ry='5' fill='none' stroke='%233fd0ff' transform='rotate(-30 16 16)'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.js"></script>
-</head>
-<body>
-<svg class="svg-defs" aria-hidden="true"><defs>
-  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
-  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5h14M5 17.5h14"/></symbol>
-  <symbol id="i-graph" viewBox="0 0 24 24"><circle cx="5" cy="7" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="13" cy="18" r="2.5"/><path d="m7.5 6.5 8-1M6.5 9l5 7M17 7.5l-3 8"/></symbol>
-  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1.6 7.2M4 4v6h6"/></symbol>
-  <symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></symbol>
-  <symbol id="i-data" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
-  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
-  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.1M3 12h.1M3 18h.1"/></symbol>
-  <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 14 4-4m-5 6-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 0 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0"/></symbol>
-</defs></svg>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#040913" />
+    <meta
+      name="description"
+      content="SateGraph 公开卫星信息与关系图谱，探索卫星系统、轨道与有来源的关系。"
+    />
+    <title>SateGraph · 公开卫星知识图谱</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%23040913' stroke='%233fd0ff'/%3E%3Cellipse cx='16' cy='16' rx='15' ry='5' fill='none' stroke='%233fd0ff' transform='rotate(-30 16 16)'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <svg class="svg-defs" aria-hidden="true">
+      <defs>
+        <symbol id="i-search" viewBox="0 0 24 24">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m16 16 4.5 4.5" />
+        </symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <ellipse cx="12" cy="12" rx="4" ry="9" />
+          <path d="M3 12h18M5 6.5h14M5 17.5h14" />
+        </symbol>
+        <symbol id="i-graph" viewBox="0 0 24 24">
+          <circle cx="5" cy="7" r="2.5" />
+          <circle cx="18" cy="5" r="2.5" />
+          <circle cx="13" cy="18" r="2.5" />
+          <path d="m7.5 6.5 8-1M6.5 9l5 7M17 7.5l-3 8" />
+        </symbol>
+        <symbol id="i-reset" viewBox="0 0 24 24">
+          <path d="M4 10a8 8 0 1 1 1.6 7.2M4 4v6h6" />
+        </symbol>
+        <symbol id="i-focus" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5" />
+          <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
+        </symbol>
+        <symbol id="i-data" viewBox="0 0 24 24">
+          <ellipse cx="12" cy="5" rx="8" ry="3" />
+          <path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0" />
+        </symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24">
+          <path d="M5 12h14m-6-6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="m6 6 12 12M18 6 6 18" />
+        </symbol>
+        <symbol id="i-list" viewBox="0 0 24 24">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.1M3 12h.1M3 18h.1" />
+        </symbol>
+        <symbol id="i-link" viewBox="0 0 24 24">
+          <path
+            d="m10 14 4-4m-5 6-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 0 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0"
+          />
+        </symbol>
+      </defs>
+    </svg>
 
-<header class="topbar">
-  <a class="brand" href="./" aria-label="SatGraph 首页">
-    <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="8"/><ellipse cx="18" cy="18" rx="16" ry="6" transform="rotate(-32 18 18)"/><circle cx="31" cy="9" r="2.5" class="brand-dot"/></svg>
-    <span><strong>SatGraph</strong><small>公开卫星知识图谱</small></span>
-  </a>
-  <div class="search-wrap">
-    <svg class="icon"><use href="#i-search"/></svg>
-    <input id="search" type="search" autocomplete="off" placeholder="检索卫星名称、NORAD 编号或系统" aria-label="检索卫星" aria-controls="suggestions">
-    <kbd>/</kbd>
-    <div id="suggestions" class="suggestions" hidden></div>
-  </div>
-  <div class="header-stats">
-    <div class="stat"><small>卫星目录</small><strong id="total-count">—</strong></div>
-    <div class="stat clock-stat"><small>模拟时间 · UTC</small><strong id="clock">—</strong></div>
-  </div>
-  <div class="speed-control" role="group" aria-label="时间控制">
-    <button data-speed="0" aria-label="暂停模拟" title="暂停">Ⅱ</button>
-    <button data-speed="1" class="active" aria-pressed="true">1×</button>
-    <button data-speed="60" aria-pressed="false">60×</button>
-    <button data-speed="600" aria-pressed="false">600×</button>
-  </div>
-  <button class="icon-button source-button" data-action="sources" title="数据源与使用说明" aria-label="数据源与使用说明"><svg class="icon"><use href="#i-data"/></svg></button>
-</header>
-
-<main class="workspace">
-  <aside class="left-panel" aria-label="星座与链路图层">
-    <div class="panel-heading"><span class="eyebrow">探索工作台</span><span class="tiny mono">01 / 图层</span></div>
-    <div class="section-title"><h2>星座图层</h2><div class="text-actions"><button id="all-layers">全选</button><span>/</span><button id="no-layers">清空</button></div></div>
-    <div id="layers" class="layers"></div>
-    <div class="section-title link-heading"><h2>关系与链路</h2><svg class="icon small"><use href="#i-link"/></svg></div>
-    <div class="relation-toggles">
-      <label><input id="rel-membership" type="checkbox" checked><span>系统归属关系</span><em class="mini-tag derived">推导</em></label>
-      <label><input id="rel-los" type="checkbox"><span>几何通视候选</span><em class="mini-tag derived">推导</em></label>
-      <label><input id="rel-model" type="checkbox" checked><span>星间链路架构示意</span><em class="mini-tag modeled">建模</em></label>
-    </div>
-    <p id="link-note" class="micro-copy">架构连线只在演示模式显示，不代表实际通信拓扑。</p>
-    <section class="confidence-card" aria-label="关系证据等级">
-      <h2 class="eyebrow">证据等级</h2>
-      <div><i class="line declared"></i><span>声明<span class="muted"> · 来源明确记录</span></span></div>
-      <div><i class="line derived"></i><span>推导<span class="muted"> · 公开规则计算</span></span></div>
-      <div><i class="line modeled"></i><span>建模<span class="muted"> · 架构示意，非实测</span></span></div>
-    </section>
-    <div class="left-footer">
-      <span class="eyebrow">公开数据，不止于位置</span>
-      <p>从轨道与系统归属出发，<br>探索每颗卫星的连接与故事。</p>
-      <button class="source-link" data-action="sources">查看数据来源与边界 <span>↗</span></button>
-    </div>
-  </aside>
-
-  <section class="scene-panel" aria-label="卫星可视化">
-    <div class="scene-topbar">
-      <div class="view-tabs" role="tablist" aria-label="可视化视图">
-        <button id="tab-globe" role="tab" aria-selected="true" class="active" data-view="globe"><svg class="icon small"><use href="#i-globe"/></svg>轨道视图</button>
-        <button id="tab-graph" role="tab" aria-selected="false" data-view="graph"><svg class="icon small"><use href="#i-graph"/></svg>关系图谱</button>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="SateGraph 首页">
+        <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="8" />
+          <ellipse
+            cx="18"
+            cy="18"
+            rx="16"
+            ry="6"
+            transform="rotate(-32 18 18)"
+          />
+          <circle cx="31" cy="9" r="2.5" class="brand-dot" />
+        </svg>
+        <span><strong>SateGraph</strong><small>公开卫星知识图谱</small></span>
+      </a>
+      <div class="search-wrap">
+        <svg class="icon"><use href="#i-search" /></svg>
+        <input
+          id="search"
+          type="search"
+          autocomplete="off"
+          placeholder="检索卫星名称、NORAD 编号或系统"
+          aria-label="检索卫星"
+          aria-controls="suggestions"
+        />
+        <kbd>/</kbd>
+        <div id="suggestions" class="suggestions" hidden></div>
       </div>
-      <button id="catalog-button" class="quiet-button"><svg class="icon small"><use href="#i-list"/></svg>卫星目录</button>
-    </div>
-    <div class="scene-caption"><span class="eyebrow cyan" id="view-label">轨道空间 / ORBITAL VIEW</span><span id="scene-description">径向比例压缩 · 地球与轨道非等比例</span></div>
-    <div class="scene-tools">
-      <button id="auto-rotate" class="tool-button active" aria-pressed="true" title="切换自动旋转"><svg class="icon"><use href="#i-globe"/></svg><span>自动旋转</span></button>
-      <button id="reset-view" class="tool-button" title="重置视角"><svg class="icon"><use href="#i-reset"/></svg><span>重置</span></button>
-    </div>
-    <canvas id="globe" tabindex="0" aria-label="地球与卫星。拖动旋转，滚轮缩放，点击卫星查看详情；也可通过卫星目录选择。"></canvas>
-    <div id="graph-view" hidden>
-      <svg id="graph" role="img" aria-label="所选卫星的系统归属、几何候选与架构示意关系图谱"></svg>
-      <div class="graph-hint">点击节点查看卫星 · 点击连线查看证据</div>
-    </div>
-    <div id="sat-tooltip" class="sat-tooltip" hidden></div>
-    <div class="scene-status"><span class="status-dot"></span><span id="render-status">初始化轨道空间</span><span class="scene-help">拖动旋转 · 滚轮缩放 · 点击卫星</span></div>
-
-    <div class="assistant-dock">
-      <div id="assistant-result" class="assistant-result" role="status" hidden></div>
-      <div class="quick-prompts">
-        <button id="open-online" aria-haspopup="dialog">手动查询与访问验证</button>
-        <button data-prompt="查询获准展示的目录统计">查询目录统计 <span>↗</span></button>
+      <div class="header-stats">
+        <div class="stat">
+          <small>卫星目录</small><strong id="total-count">—</strong>
+        </div>
+        <div class="stat clock-stat">
+          <small>模拟时间 · UTC</small><strong id="clock">—</strong>
+        </div>
       </div>
-      <form id="assistant-form" class="assistant-input">
-        <span class="assistant-symbol">✧</span>
-        <label for="assistant-query" class="sr-only">向在线只读助手提问</label>
-        <input id="assistant-query" maxlength="2000" placeholder="查询在线目录，例如：查找国际空间站的资料" autocomplete="off" required>
-        <button type="submit" aria-label="提交在线查询"><svg class="icon"><use href="#i-arrow"/></svg></button>
-      </form>
-      <div class="dock-meta"><span>在线只读助手 · 不读取本地文件</span><span id="mode-note">示意轨道，不用于导航与安全决策</span></div>
-    </div>
-    <div class="zoom-control"><button id="zoom-in" aria-label="放大地球">+</button><button id="zoom-out" aria-label="缩小地球">−</button></div>
-  </section>
+      <div class="speed-control" role="group" aria-label="时间控制">
+        <button data-speed="0" aria-label="暂停模拟" title="暂停">Ⅱ</button>
+        <button data-speed="1" class="active" aria-pressed="true">1×</button>
+        <button data-speed="60" aria-pressed="false">60×</button>
+        <button data-speed="600" aria-pressed="false">600×</button>
+      </div>
+      <button
+        class="icon-button source-button"
+        data-action="sources"
+        title="数据源与使用说明"
+        aria-label="数据源与使用说明"
+      >
+        <svg class="icon"><use href="#i-data" /></svg>
+      </button>
+    </header>
 
-  <aside class="right-panel" aria-label="卫星详情">
-    <div class="detail-topline"><span class="eyebrow">卫星详情</span><button id="close-detail" class="icon-button small-button" aria-label="关闭卫星详情"><svg class="icon small"><use href="#i-close"/></svg></button></div>
-    <div id="detail-content"></div>
-    <div class="data-connection">
-      <div class="connection-heading"><svg class="icon"><use href="#i-data"/></svg><strong>公开轨道数据</strong><span id="data-badge" class="mini-tag modeled">演示模式</span></div>
-      <p id="data-description">当前为圆轨道示意。可在浏览器内导入本地 OMM JSON。</p>
-      <div class="connection-buttons"><button id="load-public" class="primary-outline">导入 OMM</button><button id="use-demo" class="quiet-button" hidden>切回演示</button></div>
-      <button class="subtle-link" data-action="sources">接入说明与更多数据平台 ↗</button>
-    </div>
-  </aside>
-</main>
-<footer class="bottom-bar"><span><i class="status-dot"></i><span id="bottom-mode">演示数据</span><b>·</b><span id="visible-count">—</span></span><span>位置是推算，连线需证据。<b>·</b><button data-action="sources">数据来源</button><span class="version mono">SatGraph / 1.0</span></span></footer>
+    <main class="workspace">
+      <aside class="left-panel" aria-label="星座与链路图层">
+        <div class="panel-heading">
+          <span class="eyebrow">探索工作台</span
+          ><span class="tiny mono">01 / 图层</span>
+        </div>
+        <div class="section-title">
+          <h2>星座图层</h2>
+          <div class="text-actions">
+            <button id="all-layers">全选</button><span>/</span
+            ><button id="no-layers">清空</button>
+          </div>
+        </div>
+        <div id="layers" class="layers"></div>
+        <div class="section-title link-heading">
+          <h2>关系与链路</h2>
+          <svg class="icon small"><use href="#i-link" /></svg>
+        </div>
+        <div class="relation-toggles">
+          <label
+            ><input id="rel-membership" type="checkbox" checked /><span
+              >系统归属关系</span
+            ><em class="mini-tag derived">推导</em></label
+          >
+          <label
+            ><input id="rel-los" type="checkbox" /><span>几何通视候选</span
+            ><em class="mini-tag derived">推导</em></label
+          >
+          <label
+            ><input id="rel-model" type="checkbox" checked /><span
+              >星间链路架构示意</span
+            ><em class="mini-tag modeled">建模</em></label
+          >
+        </div>
+        <p id="link-note" class="micro-copy">
+          架构连线只在演示模式显示，不代表实际通信拓扑。
+        </p>
+        <section class="confidence-card" aria-label="关系证据等级">
+          <h2 class="eyebrow">证据等级</h2>
+          <div>
+            <i class="line declared"></i
+            ><span>声明<span class="muted"> · 来源明确记录</span></span>
+          </div>
+          <div>
+            <i class="line derived"></i
+            ><span>推导<span class="muted"> · 公开规则计算</span></span>
+          </div>
+          <div>
+            <i class="line modeled"></i
+            ><span>建模<span class="muted"> · 架构示意，非实测</span></span>
+          </div>
+        </section>
+        <div class="left-footer">
+          <span class="eyebrow">公开数据，不止于位置</span>
+          <p>从轨道与系统归属出发，<br />探索每颗卫星的连接与故事。</p>
+          <button class="source-link" data-action="sources">
+            查看数据来源与边界 <span>↗</span>
+          </button>
+        </div>
+      </aside>
 
-<dialog id="online-dialog" class="modal" aria-labelledby="online-title">
-  <div class="modal-header"><div><span class="eyebrow cyan">在线工作台</span><h2 id="online-title">查询目录与关系</h2><p>只显示服务端准许展示的资料。地球上的演示和导入文件不会作为在线查询依据。</p></div><button class="quiet-button" data-close="online-dialog" aria-label="收起在线面板">收起</button></div>
-  <div class="online-body">
-    <section><button type="button" class="quiet-button" id="access-start">验证访问权限</button> <span role="status" id="access-status"></span><div id="access-widget"></div></section>
-    <form id="manual-query"><h3>手动查询</h3><p>不调用模型。可先列出现有场景，再按场景资料填写分析条件。</p>
-      <div class="online-fields"><label>查询类型<select id="manual-kind"><option value="search">搜索目录</option><option value="statistics">目录统计</option><option value="entity">卫星档案</option><option value="evidence">来源证据</option><option value="relations">信息关系</option><option value="system">系统档案</option><option value="members">系统成员</option><option value="scenarios">列出现有场景</option><option value="scenario">场景详情</option><option value="path">最少跳数路径</option><option value="neighbors">邻居</option><option value="common-neighbors">共同邻居</option><option value="degree">度数</option></select></label>
-      <label>目录关键词<input id="online-q" maxlength="128" type="search"></label>
-      <label>档案、系统或证据 ID<input id="online-id" maxlength="128"></label></div>
-      <details><summary>拓扑分析条件（与助手共享）</summary><div class="online-fields">
-        <label>起点实体 ID<input name="from" maxlength="128"></label>
-        <label>终点实体 ID<input name="to" maxlength="128"></label>
-        <label>已有场景 ID<input name="scenario_id" maxlength="128"></label>
-        <label>分析时刻（UTC，例：2026-01-01T00:00:00Z）<input name="analysis_time" maxlength="128"></label>
-        <label>场景用途<input name="purpose" maxlength="128"></label>
-        <label>轨道清单 ID<input name="orbit_manifest_id" maxlength="128"></label>
-        <label>场景模型版本<input name="model_version" maxlength="128"></label>
-      </div></details>
-      <button class="primary-outline" type="submit">执行手动查询</button>
-    </form>
-    <form id="online-ask"><h3>只读助手</h3><label for="panel-query">问题</label><input id="panel-query" maxlength="2000" autocomplete="off" required><button type="submit" class="primary-outline">发送</button></form>
-    <section><button type="button" class="quiet-button" id="online-stop" disabled>停止本次查询</button><p id="online-status" role="status">尚未发起查询。</p><div id="online-view"></div><div id="online-results"></div></section>
-  </div>
-</dialog>
-<dialog id="sources-dialog" class="modal sources-modal">
-  <div class="modal-header"><div><span class="eyebrow cyan">开放数据 / OPEN DATA</span><h2>让每一条关系都有出处</h2><p>没有一个公开来源能覆盖所有卫星与实时通信链路。按字段选择来源，并保留证据。</p></div><button data-close="sources-dialog" class="icon-button" aria-label="关闭数据源说明"><svg class="icon"><use href="#i-close"/></svg></button></div>
-  <div class="source-grid" id="source-grid"></div>
-  <div class="boundary-note"><strong>关于“所有公开卫星”与“实时链路”</strong><p>本版实际接入范围是 CelesTrak 的 active 公开目录，不含全部历史对象、所有碎片、受限对象或深空任务。系统分类目前依据名称规则；未能可靠分类的对象保留为“待分类”，不强行猜测。真实星间连接、路由、时隙及链路健康通常不公开；本平台不会用轨道通视代替实际通信证据。</p><p>“声明 / 推导 / 建模”表示证据类型，不是统计概率。当前没有接入实时链路或遥测源。</p></div>
-</dialog>
+      <section class="scene-panel" aria-label="卫星可视化">
+        <div class="scene-topbar">
+          <div class="view-tabs" role="tablist" aria-label="可视化视图">
+            <button
+              id="tab-globe"
+              role="tab"
+              aria-selected="true"
+              class="active"
+              data-view="globe"
+            >
+              <svg class="icon small"><use href="#i-globe" /></svg>轨道视图
+            </button>
+            <button
+              id="tab-graph"
+              role="tab"
+              aria-selected="false"
+              data-view="graph"
+            >
+              <svg class="icon small"><use href="#i-graph" /></svg>关系图谱
+            </button>
+          </div>
+          <button id="catalog-button" class="quiet-button">
+            <svg class="icon small"><use href="#i-list" /></svg>卫星目录
+          </button>
+        </div>
+        <div class="scene-caption">
+          <span class="eyebrow cyan" id="view-label"
+            >轨道空间 / ORBITAL VIEW</span
+          ><span id="scene-description">径向比例压缩 · 地球与轨道非等比例</span>
+        </div>
+        <div class="scene-tools">
+          <button
+            id="auto-rotate"
+            class="tool-button active"
+            aria-pressed="true"
+            title="切换自动旋转"
+          >
+            <svg class="icon"><use href="#i-globe" /></svg><span>自动旋转</span>
+          </button>
+          <button id="reset-view" class="tool-button" title="重置视角">
+            <svg class="icon"><use href="#i-reset" /></svg><span>重置</span>
+          </button>
+        </div>
+        <canvas
+          id="globe"
+          tabindex="0"
+          aria-label="地球与卫星。拖动旋转，滚轮缩放，点击卫星查看详情；也可通过卫星目录选择。"
+        ></canvas>
+        <div id="graph-view" hidden>
+          <svg
+            id="graph"
+            role="img"
+            aria-label="所选卫星的系统归属、几何候选与架构示意关系图谱"
+          ></svg>
+          <div class="graph-hint">点击节点查看卫星 · 点击连线查看证据</div>
+        </div>
+        <div id="sat-tooltip" class="sat-tooltip" hidden></div>
+        <div class="scene-status">
+          <span class="status-dot"></span
+          ><span id="render-status">初始化轨道空间</span
+          ><span class="scene-help">拖动旋转 · 滚轮缩放 · 点击卫星</span>
+        </div>
 
-<dialog id="catalog-dialog" class="modal catalog-modal">
-  <div class="modal-header"><div><span class="eyebrow cyan">卫星索引</span><h2>公开卫星目录</h2></div><button data-close="catalog-dialog" class="icon-button" aria-label="关闭卫星目录"><svg class="icon"><use href="#i-close"/></svg></button></div>
-  <div class="catalog-filters"><input id="catalog-search" type="search" placeholder="名称、NORAD、COSPAR 或系统" aria-label="搜索卫星目录"><select id="catalog-group" aria-label="按系统筛选"><option value="">全部系统</option></select></div>
-  <div class="catalog-summary" id="catalog-summary"></div>
-  <div class="catalog-table-wrap"><table><thead><tr><th>卫星名称</th><th>系统</th><th>NORAD</th><th>轨道高度</th></tr></thead><tbody id="catalog-body"></tbody></table></div>
-  <div class="catalog-pagination"><button id="catalog-prev">上一页</button><span id="catalog-page"></span><button id="catalog-next">下一页</button></div>
-</dialog>
-<div id="toast" class="toast" role="status" hidden></div>
-</body>
+        <div class="assistant-dock">
+          <div
+            id="assistant-result"
+            class="assistant-result"
+            role="status"
+            hidden
+          ></div>
+          <div class="quick-prompts">
+            <button id="open-online" aria-haspopup="dialog">
+              手动查询与访问验证
+            </button>
+            <button data-prompt="查询获准展示的目录统计">
+              查询目录统计 <span>↗</span>
+            </button>
+          </div>
+          <form id="assistant-form" class="assistant-input">
+            <span class="assistant-symbol">✧</span>
+            <label for="assistant-query" class="sr-only"
+              >向在线只读助手提问</label
+            >
+            <input
+              id="assistant-query"
+              maxlength="2000"
+              placeholder="查询在线目录，例如：查找国际空间站的资料"
+              autocomplete="off"
+              required
+            />
+            <button type="submit" aria-label="提交在线查询">
+              <svg class="icon"><use href="#i-arrow" /></svg>
+            </button>
+          </form>
+          <div class="dock-meta">
+            <span>在线只读助手 · 不读取本地文件</span
+            ><span id="mode-note">示意轨道，不用于导航与安全决策</span>
+          </div>
+        </div>
+        <div class="zoom-control">
+          <button id="zoom-in" aria-label="放大地球">+</button
+          ><button id="zoom-out" aria-label="缩小地球">−</button>
+        </div>
+      </section>
+
+      <aside class="right-panel" aria-label="卫星详情">
+        <div class="detail-topline">
+          <span class="eyebrow">卫星详情</span
+          ><button
+            id="close-detail"
+            class="icon-button small-button"
+            aria-label="关闭卫星详情"
+          >
+            <svg class="icon small"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <div id="detail-content"></div>
+        <div class="data-connection">
+          <div class="connection-heading">
+            <svg class="icon"><use href="#i-data" /></svg
+            ><strong>公开轨道数据</strong
+            ><span id="data-badge" class="mini-tag modeled">演示模式</span>
+          </div>
+          <p id="data-description">
+            当前为圆轨道示意。可在浏览器内导入本地 OMM JSON。
+          </p>
+          <div class="connection-buttons">
+            <button id="load-public" class="primary-outline">导入 OMM</button
+            ><button id="use-demo" class="quiet-button" hidden>切回演示</button>
+          </div>
+          <button class="subtle-link" data-action="sources">
+            接入说明与更多数据平台 ↗
+          </button>
+        </div>
+      </aside>
+    </main>
+    <footer class="bottom-bar">
+      <span
+        ><i class="status-dot"></i><span id="bottom-mode">演示数据</span><b>·</b
+        ><span id="visible-count">—</span></span
+      ><span
+        >位置是推算，连线需证据。<b>·</b
+        ><button data-action="sources">数据来源</button
+        ><span class="version mono">SateGraph / 1.0</span></span
+      >
+    </footer>
+
+    <dialog id="online-dialog" class="modal" aria-labelledby="online-title">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow cyan">在线工作台</span>
+          <h2 id="online-title">查询目录与关系</h2>
+          <p>
+            只显示服务端准许展示的资料。地球上的演示和导入文件不会作为在线查询依据。
+          </p>
+        </div>
+        <button
+          class="quiet-button"
+          data-close="online-dialog"
+          aria-label="收起在线面板"
+        >
+          收起
+        </button>
+      </div>
+      <div class="online-body">
+        <section>
+          <button type="button" class="quiet-button" id="access-start">
+            验证访问权限
+          </button>
+          <span role="status" id="access-status"></span>
+          <div id="access-widget"></div>
+        </section>
+        <form id="manual-query">
+          <h3>手动查询</h3>
+          <p>不调用模型。可先列出现有场景，再按场景资料填写分析条件。</p>
+          <div class="online-fields">
+            <label
+              >查询类型<select id="manual-kind">
+                <option value="search">搜索目录</option>
+                <option value="statistics">目录统计</option>
+                <option value="entity">卫星档案</option>
+                <option value="evidence">来源证据</option>
+                <option value="relations">信息关系</option>
+                <option value="system">系统档案</option>
+                <option value="members">系统成员</option>
+                <option value="scenarios">列出现有场景</option>
+                <option value="scenario">场景详情</option>
+                <option value="path">最少跳数路径</option>
+                <option value="neighbors">邻居</option>
+                <option value="common-neighbors">共同邻居</option>
+                <option value="degree">度数</option>
+              </select></label
+            >
+            <label
+              >目录关键词<input id="online-q" maxlength="128" type="search"
+            /></label>
+            <label
+              >档案、系统或证据 ID<input id="online-id" maxlength="128"
+            /></label>
+          </div>
+          <details>
+            <summary>拓扑分析条件（与助手共享）</summary>
+            <div class="online-fields">
+              <label>起点实体 ID<input name="from" maxlength="128" /></label>
+              <label>终点实体 ID<input name="to" maxlength="128" /></label>
+              <label
+                >已有场景 ID<input name="scenario_id" maxlength="128"
+              /></label>
+              <label
+                >分析时刻（UTC，例：2026-01-01T00:00:00Z）<input
+                  name="analysis_time"
+                  maxlength="128"
+              /></label>
+              <label>场景用途<input name="purpose" maxlength="128" /></label>
+              <label
+                >轨道清单 ID<input name="orbit_manifest_id" maxlength="128"
+              /></label>
+              <label
+                >场景模型版本<input name="model_version" maxlength="128"
+              /></label>
+            </div>
+          </details>
+          <button class="primary-outline" type="submit">执行手动查询</button>
+        </form>
+        <form id="online-ask">
+          <h3>只读助手</h3>
+          <label for="panel-query">问题</label
+          ><input
+            id="panel-query"
+            maxlength="2000"
+            autocomplete="off"
+            required
+          /><button type="submit" class="primary-outline">发送</button>
+        </form>
+        <section>
+          <button type="button" class="quiet-button" id="online-stop" disabled>
+            停止本次查询
+          </button>
+          <p id="online-status" role="status">尚未发起查询。</p>
+          <div id="online-view"></div>
+          <div id="online-results"></div>
+        </section>
+      </div>
+    </dialog>
+    <dialog id="sources-dialog" class="modal sources-modal">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow cyan">开放数据 / OPEN DATA</span>
+          <h2>让每一条关系都有出处</h2>
+          <p>
+            没有一个公开来源能覆盖所有卫星与实时通信链路。按字段选择来源，并保留证据。
+          </p>
+        </div>
+        <button
+          data-close="sources-dialog"
+          class="icon-button"
+          aria-label="关闭数据源说明"
+        >
+          <svg class="icon"><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <div class="source-grid" id="source-grid"></div>
+      <div class="boundary-note">
+        <strong>关于“所有公开卫星”与“实时链路”</strong>
+        <p>
+          本版实际接入范围是 CelesTrak 的 active
+          公开目录，不含全部历史对象、所有碎片、受限对象或深空任务。系统分类目前依据名称规则；未能可靠分类的对象保留为“待分类”，不强行猜测。真实星间连接、路由、时隙及链路健康通常不公开；本平台不会用轨道通视代替实际通信证据。
+        </p>
+        <p>
+          “声明 / 推导 /
+          建模”表示证据类型，不是统计概率。当前没有接入实时链路或遥测源。
+        </p>
+      </div>
+    </dialog>
+
+    <dialog id="catalog-dialog" class="modal catalog-modal">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow cyan">卫星索引</span>
+          <h2>公开卫星目录</h2>
+        </div>
+        <button
+          data-close="catalog-dialog"
+          class="icon-button"
+          aria-label="关闭卫星目录"
+        >
+          <svg class="icon"><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <div class="catalog-filters">
+        <input
+          id="catalog-search"
+          type="search"
+          placeholder="名称、NORAD、COSPAR 或系统"
+          aria-label="搜索卫星目录"
+        /><select id="catalog-group" aria-label="按系统筛选">
+          <option value="">全部系统</option>
+        </select>
+      </div>
+      <div class="catalog-summary" id="catalog-summary"></div>
+      <div class="catalog-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>卫星名称</th>
+              <th>系统</th>
+              <th>NORAD</th>
+              <th>轨道高度</th>
+            </tr>
+          </thead>
+          <tbody id="catalog-body"></tbody>
+        </table>
+      </div>
+      <div class="catalog-pagination">
+        <button id="catalog-prev">上一页</button><span id="catalog-page"></span
+        ><button id="catalog-next">下一页</button>
+      </div>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+  </body>
 </html>

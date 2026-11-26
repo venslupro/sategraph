@@ -129,18 +129,30 @@ test('普通请求没有启动入口，受保护的读取不按更新阶段拒�
 test('目录先验会话，仅转发读取参数，不转发浏览器或服务端凭据', async () => {
   const cookie = (await issueCookie(keys, host)).split(';')[0];
   const calls = [];
-  const state = {...env, DATA: {async fetch(req) {
-    calls.push(req);
-    return Response.json({error: 'INVALID_QUERY'}, {
-      status: 422, headers: {'set-cookie': 'internal-only=1'},
-    });
-  }}};
+  const state = {
+    ...env,
+    DATA: {
+      async fetch(req) {
+        calls.push(req);
+        return Response.json({error: 'INVALID_QUERY'}, {
+          status: 422,
+          headers: {'set-cookie': 'internal-only=1'},
+        });
+      }
+    }
+  };
   const url = origin + '/api/v1/catalog/search?limit=101';
   assert.equal((await handle(new Request(url), state)).status, 401);
   assert.equal(calls.length, 0);
-  const res = await handle(new Request(url, {
-    headers: {cookie, authorization: 'Bearer local-only', 'x-private': 'private'},
-  }), state);
+  const res = await handle(
+      new Request(url, {
+        headers: {
+          cookie,
+          authorization: 'Bearer local-only',
+          'x-private': 'private'
+        },
+      }),
+      state);
   assert.equal(res.status, 422);
   assert.equal(res.headers.get('cache-control'), 'no-store');
   assert.equal(res.headers.has('set-cookie'), false);

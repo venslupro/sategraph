@@ -1,0 +1,14 @@
+{
+  "name": "sategraph-prd-api-gateway",
+  "main": "index.ts",
+  "compatibility_date": "2026-07-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {"enabled": false},
+  "services": [
+    {"binding": "STATUS", "service": "sategraph-prd-sync", "entrypoint": "StatusReader"},
+    {"binding": "DATA", "service": "sategraph-prd-data", "entrypoint": "CatalogReader"},
+    {"binding": "GRAPH", "service": "sategraph-prd-graph", "entrypoint": "GraphReader"},
+    {"binding": "ASSISTANT", "service": "sategraph-prd-assistant", "entrypoint": "AssistantReader"}
+  ]
+}

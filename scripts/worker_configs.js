@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {validGraphTarget} from '../src/sg-projector/target.ts';
 
 import {buildPages} from './build_pages.js';
+import {resourceName} from './resource_name.js';
 
 const root = fileURLToPath(new URL('../src/', import.meta.url));
 const hostname =
@@ -13,10 +14,10 @@ const hostname =
 
 export async function renderConfigs(b, output, instance) {
   const s = b.existing_services;
-  if (!['dev', 'staging', 'prod'].includes(b.environment) ||
-      !/^[0-9a-f]{32}$/.test(b.account_id) ||
+  const coreName = resourceName(b.environment, 'core');
+  if (!/^[0-9a-f]{32}$/.test(b.account_id) ||
       !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(b.d1_database_id) ||
-      b.d1_database_name !== 'sategraph-' + b.environment + '-core' ||
+      b.d1_database_name !== coreName ||
       typeof b.public_hostname !== 'string' || b.public_hostname.length > 253 ||
       !hostname.test(b.public_hostname) ||
       typeof b.turnstile_site_key !== 'string' ||
@@ -27,7 +28,6 @@ export async function renderConfigs(b, output, instance) {
       !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(instance)) {
     throw new Error('无效的环境、图实例标识或 Terraform 绑定输出');
   }
-  const suffix = '-' + b.environment;
   const db = {
     binding: 'CORE',
     database_name: b.d1_database_name,
@@ -62,16 +62,28 @@ export async function renderConfigs(b, output, instance) {
       }
     },
   };
+  const names = new Set(
+      Object.keys(roles).map(unit => resourceName(b.environment, unit)));
   for (const [unit, role] of Object.entries(roles)) {
     const serviceDir = resolve(root, 'sg-' + unit);
     const config = JSON.parse(
-        await readFile(resolve(serviceDir, 'wrangler.jsonc'), 'utf8'));
+        await readFile(resolve(serviceDir, 'wrangler.template.jsonc'), 'utf8'));
     config.main = relative(output, resolve(serviceDir, config.main));
-    config.name += suffix;
+    if (config.name !== resourceName(b.environment, unit)) {
+      throw new Error('Worker 模板名称与模块不符：' + unit);
+    }
     config.account_id = b.account_id;
-    for (const link of config.services ?? []) link.service += suffix;
-    if (role.core) config.d1_databases = [db];
-    if (role.vars) config.vars = {...config.vars, ...role.vars};
+    for (const link of config.services ?? []) {
+      if (!names.has(link.service)) {
+        throw new Error('未知的 Worker 绑定目标：' + link.service);
+      }
+    }
+    if (role.core) {
+      config.d1_databases = [db];
+    }
+    if (role.vars) {
+      config.vars = {...config.vars, ...role.vars};
+    }
     configs[unit] = config;
   }
   return configs;
@@ -82,7 +94,7 @@ export async function renderDeployment(b, output, instance, buildParent) {
   const workers = await renderConfigs(b, output, instance);
   const assets = await buildPages(resolve(buildParent));
   const pages = {
-    name: 'sg-pages-' + b.environment,
+    name: resourceName(b.environment, 'pages'),
     account_id: b.account_id,
     compatibility_date: workers['api-gateway'].compatibility_date,
     pages_build_output_dir: relative(output, assets)

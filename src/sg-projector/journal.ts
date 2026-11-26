@@ -25,10 +25,13 @@ export async function snapshot(
           STATE + '), 9223372036854775807) ORDER BY event_seq LIMIT ?')
         .bind(MAX_ROWS),
   ]);
-  if (!owner!.results.length) throw new Error('FENCED');
+  if (!owner!.results.length) {
+    throw new Error('FENCED');
+  }
   const saved = state!.results[0] as unknown as CursorRow | undefined;
-  if (saved && saved.instance_id !== instance)
+  if (saved && saved.instance_id !== instance) {
     throw new Error('INSTANCE_MISMATCH');
+  }
   const base = {cursor: saved?.acknowledged ?? 0, hash: saved?.last_hash ?? ''};
   const chunk =
       await makeChunk(instance, base, events!.results as unknown as EventRow[]);
@@ -69,8 +72,9 @@ function requireProof(
     w: Writer, instance: string, pos: Position, proof: GraphProof) {
   if (proof.instance !== instance || proof.runId !== w.runId ||
       proof.epoch !== w.epoch || proof.cursor !== pos.cursor ||
-      proof.hash !== pos.hash)
+      proof.hash !== pos.hash) {
     throw new Error('PROOF_MISMATCH');
+  }
 }
 
 /** 只有图端已在锁内切换到更高代际后，才能接手上一代未提交的分片。 */

@@ -1,25 +1,73 @@
-import {circularPosition, displayRadius, GROUP_BY_ID, hasLineOfSight, RAD} from './model.js';
+import {circularPosition, displayRadius, GROUP_BY_ID, hasLineOfSight, RAD} from './model.ts';
+import type {DisplayEdge, Position, Satellite} from './orbit_types.ts';
+
+export interface ScreenPoint {
+  x: number;
+  y: number;
+  depth: number;
+  hidden: boolean;
+  id: string;
+  sat: Satellite;
+  position: Position;
+}
+interface GlobeOptions {
+  getVisible(): Satellite[];
+  getSelected(): Satellite|undefined;
+  getPositions(): Map<string, Position>;
+  getEdges(): DisplayEdge[];
+  onSelect(id: string): void;
+  onError(message: string): void;
+  onHover(p: ScreenPoint|null, x?: number, y?: number): void;
+  onFollowChange(follow: boolean): void;
+}
 
 const TAU = Math.PI * 2;
-const rgba = (hex, a) => {
+const rgba = (hex: string, a: number) => {
   const n = parseInt(hex.slice(1), 16);
   return 'rgba(' + [(n >> 16) & 255, (n >> 8) & 255, n & 255, a].join(',') +
       ')';
 };
-function inPolygon(x, y, poly) {
+function inPolygon(x: number, y: number, poly: number[][]) {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const a = poly[i], b = poly[j];
+    const a = poly[i];
+    const b = poly[j];
     if ((a[1] > y) !== (b[1] > y) &&
-        x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0])
+        x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) {
       inside = !inside;
+    }
   }
   return inside;
 }
 export class Globe {
-  constructor(canvas, options) {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  options: GlobeOptions;
+  view: {yaw: number; pitch: number; zoom: number};
+  auto: boolean;
+  follow: boolean;
+  target: {yaw: number; pitch: number}|null;
+  drag: {x: number; y: number; moved: number}|null;
+  screen: ScreenPoint[];
+  dots: number[][];
+  land: number[][][];
+  path: {id: string; points: number[][]}|null;
+  stars: number[][];
+  resizeObserver: ResizeObserver;
+  dpr = 1;
+  w = 0;
+  h = 0;
+  cx = 0;
+  cy = 0;
+  radius = 0;
+
+  constructor(canvas: HTMLCanvasElement, options: GlobeOptions) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw Error('当前浏览器不能创建 Canvas 2D 画布');
+    }
+    this.ctx = ctx;
     this.options = options;
     this.view = {yaw: -.32, pitch: -.27, zoom: 1};
     this.auto = !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -31,7 +79,7 @@ export class Globe {
     this.land = [];
     this.path = null;
     this.stars = Array.from({length: 290}, (_, i) => {
-      const rand = n => {
+      const rand = (n: number) => {
         const x = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
         return x - Math.floor(x);
       };
@@ -81,7 +129,8 @@ export class Globe {
     });
     c.addEventListener('pointermove', e => {
       if (this.drag) {
-        const dx = e.clientX - this.drag.x, dy = e.clientY - this.drag.y;
+        const dx = e.clientX - this.drag.x;
+        const dy = e.clientY - this.drag.y;
         this.drag.x = e.clientX;
         this.drag.y = e.clientY;
         this.drag.moved += Math.abs(dx) + Math.abs(dy);
@@ -94,21 +143,25 @@ export class Globe {
           this.options.onFollowChange?.(false);
         }
       } else {
-        const rect = c.getBoundingClientRect(),
-              p = this.pick(e.clientX - rect.left, e.clientY - rect.top);
+        const rect = c.getBoundingClientRect();
+        const p = this.pick(e.clientX - rect.left, e.clientY - rect.top);
         c.style.cursor = p ? 'pointer' : 'grab';
         this.options.onHover?.(p, e.clientX - rect.left, e.clientY - rect.top);
       }
     });
     c.addEventListener('pointerup', e => {
-      if (!this.drag) return;
+      if (!this.drag) {
+        return;
+      }
       const click = this.drag.moved < 5;
       this.drag = null;
       c.style.cursor = 'grab';
       if (click) {
-        const rect = c.getBoundingClientRect(),
-              s = this.pick(e.clientX - rect.left, e.clientY - rect.top);
-        if (s) this.options.onSelect(s.id);
+        const rect = c.getBoundingClientRect();
+        const s = this.pick(e.clientX - rect.left, e.clientY - rect.top);
+        if (s) {
+          this.options.onSelect(s.id);
+        }
       }
     });
     c.addEventListener('pointercancel', () => {
@@ -124,20 +177,33 @@ export class Globe {
       if ([
             'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '-',
             'Escape'
-          ].includes(e.key))
+          ].includes(e.key)) {
         e.preventDefault();
-      if (e.key === 'ArrowLeft') this.view.yaw -= .12;
-      if (e.key === 'ArrowRight') this.view.yaw += .12;
-      if (e.key === 'ArrowUp')
+      }
+      if (e.key === 'ArrowLeft') {
+        this.view.yaw -= .12;
+      }
+      if (e.key === 'ArrowRight') {
+        this.view.yaw += .12;
+      }
+      if (e.key === 'ArrowUp') {
         this.view.pitch = Math.min(1.42, this.view.pitch + .12);
-      if (e.key === 'ArrowDown')
+      }
+      if (e.key === 'ArrowDown') {
         this.view.pitch = Math.max(-1.42, this.view.pitch - .12);
-      if (e.key === '+') this.zoom(1.15);
-      if (e.key === '-') this.zoom(1 / 1.15);
-      if (e.key === 'Escape') this.reset();
+      }
+      if (e.key === '+') {
+        this.zoom(1.15);
+      }
+      if (e.key === '-') {
+        this.zoom(1 / 1.15);
+      }
+      if (e.key === 'Escape') {
+        this.reset();
+      }
     });
   }
-  zoom(factor) {
+  zoom(factor: number) {
     this.view.zoom = Math.max(.55, Math.min(2.7, this.view.zoom * factor));
   }
   reset() {
@@ -146,8 +212,10 @@ export class Globe {
     this.follow = false;
     this.options.onFollowChange?.(false);
   }
-  focus(position) {
-    if (!position) return;
+  focus(position: Position|undefined) {
+    if (!position) {
+      return;
+    }
     const wanted = Math.PI / 2 - position.lon * RAD;
     const delta =
         ((wanted - this.view.yaw) % (TAU) + 3 * Math.PI) % TAU - Math.PI;
@@ -156,8 +224,9 @@ export class Globe {
       pitch: Math.max(-1.3, Math.min(1.3, -position.lat * RAD))
     };
   }
-  pick(x, y) {
-    let best = null, distance = 12;
+  pick(x: number, y: number) {
+    let best = null;
+    let distance = 12;
     for (const s of this.screen) {
       const d = Math.hypot(x - s.x, y - s.y);
       if (!s.hidden && d < distance) {
@@ -167,11 +236,17 @@ export class Globe {
     }
     return best;
   }
-  project(v) {
-    const {yaw, pitch} = this.view, c = Math.cos(yaw), s = Math.sin(yaw),
-                cp = Math.cos(pitch), sp = Math.sin(pitch);
-    const x = v[0] * c - v[1] * s, y = v[0] * s + v[1] * c, z = v[2];
-    const depth = y * cp - z * sp, up = y * sp + z * cp;
+  project(v: number[]) {
+    const {yaw, pitch} = this.view;
+    const c = Math.cos(yaw);
+    const s = Math.sin(yaw);
+    const cp = Math.cos(pitch);
+    const sp = Math.sin(pitch);
+    const x = v[0] * c - v[1] * s;
+    const y = v[0] * s + v[1] * c;
+    const z = v[2];
+    const depth = y * cp - z * sp;
+    const up = y * sp + z * cp;
     return {
       x: this.cx + x * this.radius,
       y: this.cy - up * this.radius,
@@ -179,7 +254,7 @@ export class Globe {
       hidden: depth < 0 && x * x + up * up < 1
     };
   }
-  drawPath(points, color, width = 1, dash = []) {
+  drawPath(points: number[][], color: string, width = 1, dash: number[] = []) {
     const ctx = this.ctx;
     ctx.beginPath();
     let pen = false;
@@ -189,10 +264,11 @@ export class Globe {
         pen = false;
         continue;
       }
-      if (pen)
+      if (pen) {
         ctx.lineTo(p.x, p.y);
-      else
+      } else {
         ctx.moveTo(p.x, p.y);
+      }
       pen = true;
     }
     ctx.strokeStyle = color;
@@ -201,28 +277,37 @@ export class Globe {
     ctx.stroke();
     ctx.setLineDash([]);
   }
-  draw(now, dt, ms) {
-    const ctx = this.ctx, W = this.w, H = this.h;
-    if (!W || !H) return;
+  draw(now: number, dt: number, ms: number) {
+    const ctx = this.ctx;
+    const W = this.w;
+    const H = this.h;
+    if (!W || !H) {
+      return;
+    }
     this.cx = W * .5;
     this.cy = H * .445;
     this.radius = Math.min(W * .235, H * .25) * this.view.zoom;
-    const selected = this.options.getSelected(),
-          positions = this.options.getPositions(),
-          catalog = this.options.getVisible();
+    const selected = this.options.getSelected();
+    const positions = this.options.getPositions();
+    const catalog = this.options.getVisible();
     const selectedPosition = selected && positions.get(selected.id);
-    if (this.follow && selectedPosition && !this.drag)
+    if (this.follow && selectedPosition && !this.drag) {
       this.focus(selectedPosition);
+    }
     if (this.target && !this.drag) {
       const k = Math.min(1, dt * 5);
       this.view.yaw += (this.target.yaw - this.view.yaw) * k;
       this.view.pitch += (this.target.pitch - this.view.pitch) * k;
       if (!this.follow && Math.abs(this.target.yaw - this.view.yaw) < .001 &&
-          Math.abs(this.target.pitch - this.view.pitch) < .001)
+          Math.abs(this.target.pitch - this.view.pitch) < .001) {
         this.target = null;
-    } else if (this.auto && !this.drag)
+      }
+    } else if (this.auto && !this.drag) {
       this.view.yaw -= dt * .022;
-    const S = this.radius, cx = this.cx, cy = this.cy;
+    }
+    const S = this.radius;
+    const cx = this.cx;
+    const cy = this.cy;
     ctx.clearRect(0, 0, W, H);
     for (const [x, y, brightness, size] of this.stars) {
       ctx.fillStyle = 'rgba(163,195,229,' + (.08 + brightness * .42) + ')';
@@ -247,7 +332,7 @@ export class Globe {
     ctx.beginPath();
     ctx.arc(cx, cy, S, 0, TAU);
     ctx.fill();
-    const globeLine = points => {
+    const globeLine = (points: number[][]) => {
       ctx.beginPath();
       let pen = false;
       for (const v of points) {
@@ -256,10 +341,11 @@ export class Globe {
           pen = false;
           continue;
         }
-        if (pen)
+        if (pen) {
           ctx.lineTo(p.x, p.y);
-        else
+        } else {
           ctx.moveTo(p.x, p.y);
+        }
         pen = true;
       }
       ctx.stroke();
@@ -268,25 +354,29 @@ export class Globe {
     ctx.lineWidth = .65;
     for (let la = -60; la <= 60; la += 30) {
       const line = [];
-      for (let lo = -180; lo <= 180; lo += 3)
+      for (let lo = -180; lo <= 180; lo += 3) {
         line.push([
           Math.cos(la * RAD) * Math.cos(lo * RAD),
           Math.cos(la * RAD) * Math.sin(lo * RAD), Math.sin(la * RAD)
         ]);
+      }
       globeLine(line);
     }
     for (let lo = -180; lo < 180; lo += 30) {
       const line = [];
-      for (let la = -90; la <= 90; la += 3)
+      for (let la = -90; la <= 90; la += 3) {
         line.push([
           Math.cos(la * RAD) * Math.cos(lo * RAD),
           Math.cos(la * RAD) * Math.sin(lo * RAD), Math.sin(la * RAD)
         ]);
+      }
       globeLine(line);
     }
     for (const v of this.dots) {
       const p = this.project(v);
-      if (p.depth < .02) continue;
+      if (p.depth < .02) {
+        continue;
+      }
       const light =
           .25 + .75 * Math.max(0, (v[0] * -.3 + v[1] * .8 + v[2] * .5));
       ctx.fillStyle = 'rgba(' +
@@ -301,11 +391,12 @@ export class Globe {
     }
     ctx.strokeStyle = 'rgba(113,218,255,.14)';
     ctx.lineWidth = .65;
-    for (const polygon of this.land)
+    for (const polygon of this.land) {
       globeLine(polygon.map(
           ([lo, la]) =>
               [Math.cos(la * RAD) * Math.cos(lo * RAD),
                Math.cos(la * RAD) * Math.sin(lo * RAD), Math.sin(la * RAD)]));
+    }
     ctx.strokeStyle = 'rgba(91,202,255,.42)';
     ctx.lineWidth = .9;
     ctx.beginPath();
@@ -315,10 +406,13 @@ export class Globe {
     const orbits = new Set();
     for (const s of catalog) {
       if (!s.demo || s.kind === 'geo' ||
-          !['bds', 'gps', 'gal', 'glo', 'iridium'].includes(s.group))
+          !['bds', 'gps', 'gal', 'glo', 'iridium'].includes(s.group)) {
         continue;
+      }
       const key = s.group + '-' + s.plane;
-      if (orbits.has(key) || orbits.size > 21) continue;
+      if (orbits.has(key) || orbits.size > 21) {
+        continue;
+      }
       orbits.add(key);
       const points = [];
       for (let k = 0; k <= 96; k++) {
@@ -334,12 +428,15 @@ export class Globe {
               s.group === selected?.group?.trim() ? .20 : .085),
           .65);
     }
-    const screen = [], screenById = new Map();
+    const screen: ScreenPoint[] = [];
+    const screenById = new Map<string, ScreenPoint>();
     for (const s of catalog) {
       const pos = positions.get(s.id);
-      if (!pos) continue;
-      const r = displayRadius(pos.alt),
-            p = this.project(pos.unit.map(v => v * r));
+      if (!pos) {
+        continue;
+      }
+      const r = displayRadius(pos.alt);
+      const p = this.project(pos.unit.map(v => v * r));
       const entry = {...p, id: s.id, sat: s, position: pos};
       screen.push(entry);
       screenById.set(s.id, entry);
@@ -365,10 +462,12 @@ export class Globe {
       }
     }
     for (const edge of this.options.getEdges()) {
-      const a = screenById.get(edge.a), b = screenById.get(edge.b);
+      const a = screenById.get(edge.a);
+      const b = screenById.get(edge.b);
       if (!a || !b || a.hidden || b.hidden ||
-          !hasLineOfSight(a.position.physical, b.position.physical))
+          !hasLineOfSight(a.position.physical, b.position.physical)) {
         continue;
+      }
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -382,10 +481,15 @@ export class Globe {
     screen.sort((a, b) => a.depth - b.depth);
     const crowded = screen.length > 3000;
     for (const p of screen) {
-      if (p.hidden) continue;
-      const s = p.sat, col = GROUP_BY_ID[s.group].color,
-            isSelected = s.id === selected?.id;
-      if (isSelected) continue;
+      if (p.hidden) {
+        continue;
+      }
+      const s = p.sat;
+      const col = GROUP_BY_ID[s.group].color;
+      const isSelected = s.id === selected?.id;
+      if (isSelected) {
+        continue;
+      }
       const r = crowded ? 1.05 : (s.group === 'station' ? 2.5 : 1.65);
       if (!crowded) {
         ctx.fillStyle = rgba(col, .08);
@@ -401,9 +505,9 @@ export class Globe {
       ctx.globalAlpha = 1;
     }
     const p = selected && screenById.get(selected.id);
-    if (p && !p.hidden) {
-      const color = GROUP_BY_ID[selected.group].color,
-            pulse = 1 + Math.sin(now / 650) * .08;
+    if (selected && p && !p.hidden) {
+      const color = GROUP_BY_ID[selected.group].color;
+      const pulse = 1 + Math.sin(now / 650) * .08;
       ctx.strokeStyle = rgba(color, .4);
       ctx.lineWidth = .8;
       ctx.beginPath();
@@ -425,8 +529,11 @@ export class Globe {
           selected.name;
       ctx.font = '10px "PingFang SC",system-ui,sans-serif';
       const width = ctx.measureText(label).width + 17;
-      let x = p.x + 18, y = p.y - 16;
-      if (x + width > W - 12) x = p.x - width - 18;
+      let x = p.x + 18;
+      const y = p.y - 16;
+      if (x + width > W - 12) {
+        x = p.x - width - 18;
+      }
       ctx.fillStyle = '#081222e8';
       ctx.strokeStyle = rgba(color, .35);
       ctx.lineWidth = .7;

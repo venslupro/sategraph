@@ -17,22 +17,27 @@ interface Env {
 function json(status: number, data: object, cookie?: string) {
   const headers = new Headers(
       {'cache-control': 'no-store', 'x-content-type-options': 'nosniff'});
-  if (cookie) headers.set('set-cookie', cookie);
+  if (cookie) {
+    headers.set('set-cookie', cookie);
+  }
   return Response.json(data, {status, headers});
 }
 
 async function readToken(request: Request): Promise<string|null> {
   if (!request.headers.get('content-type')
            ?.match(/^application\/json(?:;|$)/i) ||
-      !request.body)
+      !request.body) {
     return null;
+  }
   const reader = request.body.getReader();
   const body = new Uint8Array(4096);
   let size = 0;
   try {
     while (true) {
       const {value, done} = await reader.read();
-      if (done) break;
+      if (done) {
+        break;
+      }
       if (size + value.byteLength > body.length) {
         await reader.cancel();
         return null;
@@ -55,8 +60,9 @@ async function readToken(request: Request): Promise<string|null> {
 export async function handle(
     request: Request, env: Env, send: typeof fetch = fetch) {
   const {origin, protocol, host, pathname} = new URL(request.url);
-  if (protocol !== 'https:' || host !== env.PUBLIC_HOSTNAME)
+  if (protocol !== 'https:' || host !== env.PUBLIC_HOSTNAME) {
     return json(403, {error: 'INVALID_HOST'});
+  }
   if (request.method !== 'GET' && request.headers.get('origin') !== origin) {
     return json(403, {error: 'ORIGIN_MISMATCH'});
   }
@@ -67,11 +73,16 @@ export async function handle(
           json(503, {error: 'ACCESS_NOT_CONFIGURED'});
     }
     if (pathname === '/api/v1/access/verify') {
-      if (request.method !== 'POST')
+      if (request.method !== 'POST') {
         return json(405, {error: 'METHOD_NOT_ALLOWED'});
+      }
       const token = await readToken(request);
-      if (!token) return json(422, {error: 'INVALID_TOKEN'});
-      if (!env.TURNSTILE_SECRET) throw new Error('CONFIG_REQUIRED');
+      if (!token) {
+        return json(422, {error: 'INVALID_TOKEN'});
+      }
+      if (!env.TURNSTILE_SECRET) {
+        throw new Error('CONFIG_REQUIRED');
+      }
       const res = await send(
           'https://challenges.cloudflare.com/turnstile/v0/siteverify', {
             method: 'POST',
@@ -80,7 +91,9 @@ export async function handle(
             body: new URLSearchParams(
                 {secret: env.TURNSTILE_SECRET, response: token}),
           });
-      if (!res.ok) throw new Error('SITEVERIFY_UNAVAILABLE');
+      if (!res.ok) {
+        throw new Error('SITEVERIFY_UNAVAILABLE');
+      }
       const reply = await res.json() as {
         success?: boolean;
         hostname?: string;
@@ -97,8 +110,9 @@ export async function handle(
       const {phase, run_status, data_quality} = await env.STATUS.status();
       return json(200, {phase, run_status, data_quality});
     }
-    if (!pathname.startsWith('/api/v1/'))
+    if (!pathname.startsWith('/api/v1/')) {
       return json(404, {error: 'NOT_FOUND'});
+    }
     if (!await validSession(
             request.headers.get('cookie') ?? '', env.SESSION_KEYS, host)) {
       return json(401, {error: 'SESSION_REQUIRED'});
@@ -115,8 +129,9 @@ export async function handle(
     const assistant = pathname === '/api/v1/assistant/query';
     if (isCatalogRoute(pathname) || graphRead || analysis || assistant) {
       const post = analysis || assistant;
-      if (request.method !== (post ? 'POST' : 'GET'))
+      if (request.method !== (post ? 'POST' : 'GET')) {
         return json(405, {error: 'METHOD_NOT_ALLOWED'});
+      }
       const headers = new Headers();
       let body: string|undefined;
       if (post) {
@@ -126,7 +141,9 @@ export async function handle(
       }
       const sse =
           assistant && request.headers.get('accept') === 'text/event-stream';
-      if (sse) headers.set('accept', 'text/event-stream');
+      if (sse) {
+        headers.set('accept', 'text/event-stream');
+      }
       const binding = assistant   ? env.ASSISTANT :
           (graphRead || analysis) ? env.GRAPH :
                                     env.DATA;

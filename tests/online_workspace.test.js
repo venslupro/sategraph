@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {askAssistant, resolveAction} from '../src/sg-pages/online_client.js';
-import {mountWorkspace, workspace} from '../src/sg-pages/online_workspace.js';
+import {askAssistant, resolveAction} from '../src/sg-pages/online_client.ts';
+import {mountWorkspace, workspace} from '../src/sg-pages/online_workspace.ts';
 
 const fields = () => ({q: '示例', id: 'norad:1', context: {}});
 const wire = (packets, rev = 1) =>
@@ -30,14 +30,16 @@ const sse = body =>
 test(
     '按字节分片的中文 SSE 正常解码；异版、换请求、乱序、缺结束或结束后追加均拒绝',
     async () => {
-      const raw = wire(events), bytes = new TextEncoder().encode(raw);
+      const raw = wire(events);
+      const bytes = new TextEncoder().encode(raw);
       const seen = [];
       await askAssistant(
           {context_revision: 1}, e => seen.push(e),
           new AbortController().signal, async () => sse(new ReadableStream({
                                           start(c) {
-                                            for (const b of bytes)
+                                            for (const b of bytes) {
                                               c.enqueue(Uint8Array.of(b));
+                                            }
                                             c.close();
                                           }
                                         })));
@@ -45,12 +47,13 @@ test(
       for (const bad
                of [wire(events, 2), raw.replace('"seq":2', '"seq":3'),
                    raw.replace('"request_id":"test"', '"request_id":"wrong"'),
-                   wire(events.slice(0, -1)), raw + wire(events)])
+                   wire(events.slice(0, -1)), raw + wire(events)]) {
         await assert.rejects(
             askAssistant(
                 {context_revision: 1}, () => {}, new AbortController().signal,
                 async () => sse(bad)),
             /INTERRUPTED/);
+      }
     });
 
 test(
@@ -79,7 +82,9 @@ test(
         });
         await ws.ask('问题');
         assert.equal(latest.views.length, want ? 1 : 0);
-        if (packets.length < 5) assert.equal(latest.status, 'INTERRUPTED');
+        if (packets.length < 5) {
+          assert.equal(latest.status, 'INTERRUPTED');
+        }
       }
       const refs = new Map([[
         1, {
@@ -99,14 +104,17 @@ test(
     });
 
 test('条件改变后旧流或手动结果不覆盖新结果；停止后不重试', async () => {
-  const gate = Promise.withResolvers(), seen = [];
+  const gate = Promise.withResolvers();
+  const seen = [];
   let last;
   const ws = workspace({
     fields,
     render: s => last = s,
     send: async (path, init) => {
       seen.push([path, init.signal]);
-      if (seen.length === 1) return gate.promise;
+      if (seen.length === 1) {
+        return gate.promise;
+      }
       return Response.json({objects_with_orbit: 3});
     }
   });
@@ -171,7 +179,9 @@ test(
         }
       });
       const el = id => {
-        if (!parts.has(id)) parts.set(id, node());
+        if (!parts.has(id)) {
+          parts.set(id, node());
+        }
         return parts.get(id);
       };
       el('manual-query').elements = {namedItem: () => ({value: ''})};
@@ -180,7 +190,8 @@ test(
         createElement: node,
         defaultView: {addEventListener() {}}
       };
-      const bodies = [], calls = [];
+      const bodies = [];
+      const calls = [];
       let widget;
       const view = mountWorkspace(doc, {
         challenge: async () => ({
@@ -191,8 +202,9 @@ test(
         }),
         send: async (path, init) => {
           calls.push(path);
-          if (path.endsWith('/config'))
+          if (path.endsWith('/config')) {
             return Response.json({sitekey: 'public-key'});
+          }
           if (path.endsWith('/verify')) {
             assert.deepEqual(JSON.parse(init.body), {token: 'fixture'});
             return Response.json({verified: true});
@@ -216,6 +228,8 @@ test(
         {role: 'user', text: '底部问题'}, {role: 'assistant', text: '依据 [1]'}
       ]);
       assert.ok(el('online-dialog').open);
-      for (let i = 0; i < 4; i++) await view.ask('后续问题' + i);
+      for (let i = 0; i < 4; i++) {
+        await view.ask('后续问题' + i);
+      }
       assert.equal(bodies.at(-1).history.length, 6);
     });

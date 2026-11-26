@@ -11,9 +11,13 @@ terraform {
 
 provider "cloudflare" {}
 
+locals {
+  resource_prefix = "sategraph-${var.environment}"
+}
+
 resource "cloudflare_d1_database" "core" {
   account_id = var.account_id
-  name       = "sategraph-${var.environment}-core"
+  name       = "${local.resource_prefix}-core"
 
   lifecycle {
     prevent_destroy = true
@@ -22,7 +26,7 @@ resource "cloudflare_d1_database" "core" {
 
 resource "cloudflare_turnstile_widget" "access" {
   account_id = var.account_id
-  name       = "sategraph-${var.environment}-access"
+  name       = "${local.resource_prefix}-access"
   mode       = "managed"
   domains    = [var.public_hostname]
 }

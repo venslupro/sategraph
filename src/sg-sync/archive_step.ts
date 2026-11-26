@@ -30,7 +30,9 @@ async function current(db: D1Database, w: Writer) {
           INPUT + 'WHERE i.run_id=? AND i.source_id=? AND i.writer_epoch=?')
         .bind(w.runId, GP_SOURCE, w.epoch),
   ]);
-  if (!guard!.results.length) throw new Error('FENCED');
+  if (!guard!.results.length) {
+    throw new Error('FENCED');
+  }
   return rows!.results[0] as unknown as Input | undefined;
 }
 
@@ -92,16 +94,21 @@ export async function archiveSource(
             .first<Input>();
     raw = await load(prior?.etag ?? undefined);
     const candidate = raw ? readyInput(raw, port.bucketId) : prior;
-    if (!candidate || (!raw && !prior?.etag))
+    if (!candidate || (!raw && !prior?.etag)) {
       throw new Error('UNPROVEN_NOT_MODIFIED');
+    }
     await pin(db, w, candidate);
     input = await current(db, w);
-    if (!input || input.sha256 !== candidate.sha256)
+    if (!input || input.sha256 !== candidate.sha256) {
       throw new Error('FROZEN_INPUT_CONFLICT');
+    }
   }
-  if (input.bucket_id !== port.bucketId)
+  if (input.bucket_id !== port.bucketId) {
     throw new Error('ARCHIVE_BUCKET_CHANGED');
-  if (input.phase === 'CONFIRMED') return input;
+  }
+  if (input.phase === 'CONFIRMED') {
+    return input;
+  }
   const identity = {
     sha256: input.sha256,
     sha1: input.sha1,
@@ -110,11 +117,14 @@ export async function archiveSource(
   let version = await port.find(identity);
   if (!version) {
     // SENDING 表示可能已送达。即使列举为空，也不能据此断言未提交。
-    if (input.phase === 'SENDING') throw new Error('ARCHIVE_COMMIT_UNKNOWN');
+    if (input.phase === 'SENDING') {
+      throw new Error('ARCHIVE_COMMIT_UNKNOWN');
+    }
     raw ??= await load();
     if (!raw || raw.sha256 !== input.sha256 || raw.sha1 !== input.sha1 ||
-        raw.bytes.byteLength !== input.byte_length)
+        raw.bytes.byteLength !== input.byte_length) {
       throw new Error('FROZEN_INPUT_CHANGED');
+    }
     const claim =
         await db
             .prepare(
@@ -126,12 +136,16 @@ export async function archiveSource(
             .run();
     if (claim.meta.changes !== 1) {
       const after = await current(db, w);
-      if (after?.phase === 'CONFIRMED') return after;
+      if (after?.phase === 'CONFIRMED') {
+        return after;
+      }
       throw new Error('ARCHIVE_COMMIT_UNKNOWN');
     }
     version = await port.upload(identity, raw.bytes);
   }
-  if (!version || version.length > 256) throw new Error('INVALID_FILE_VERSION');
+  if (!version || version.length > 256) {
+    throw new Error('INVALID_FILE_VERSION');
+  }
   await db
       .prepare(
           'UPDATE archive_object SET phase=\'CONFIRMED\', file_id=? WHERE bucket_id=? AND sha256=? ' +
@@ -139,7 +153,8 @@ export async function archiveSource(
       .bind(version, port.bucketId, input.sha256, w.runId, w.epoch)
       .run();
   const receipt = await current(db, w);
-  if (receipt?.phase !== 'CONFIRMED' || receipt.file_id !== version)
+  if (receipt?.phase !== 'CONFIRMED' || receipt.file_id !== version) {
     throw new Error('ARCHIVE_PROOF_CONFLICT');
+  }
   return receipt;
 }

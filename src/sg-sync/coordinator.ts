@@ -54,7 +54,7 @@ export function validSlot(cron: string, slot: number, now: number): boolean {
 
 export async function readStatus(storage: DurableObjectStorage) {
   const run = await storage.get<Run>(CONTROL);
-  if (!run)
+  if (!run) {
     return {
       phase: 'IDLE',
       run_status: 'NEVER_RUN',
@@ -63,6 +63,7 @@ export async function readStatus(storage: DurableObjectStorage) {
       last_complete_success_at: null,
       last_complete_publication_id: null
     };
+  }
   const {
     phase,
     run_status,
@@ -87,15 +88,21 @@ export async function readStatus(storage: DurableObjectStorage) {
 
 export async function admit(
     storage: DurableObjectStorage, cron: string, slot: number, now: number) {
-  if (!validSlot(cron, slot, now)) return 'INVALID_SLOT';
+  if (!validSlot(cron, slot, now)) {
+    return 'INVALID_SLOT';
+  }
   const id = crypto.randomUUID();
   return storage.transaction(async tx => {
     const last = await tx.get<number>('last_slot');
-    if (last !== undefined && slot <= last) return 'DUPLICATE';
+    if (last !== undefined && slot <= last) {
+      return 'DUPLICATE';
+    }
     const previous = await tx.get<Run>(CONTROL);
     // 即使上一轮跨日，已跳过的槽也不能在同槽第二次投递时补开。
     await tx.put('last_slot', slot);
-    if (previous?.run_status === 'RUNNING') return 'BUSY';
+    if (previous?.run_status === 'RUNNING') {
+      return 'BUSY';
+    }
     const run: Run = {
       run_id: id,
       schedule_slot: slot,
@@ -138,7 +145,9 @@ export async function resume(
   const lease = await storage.transaction(async tx => {
     const run = await tx.get<Run>(CONTROL);
     const now = clock();
-    if (!run || run.run_status !== 'RUNNING' || now < run.next_at!) return;
+    if (!run || run.run_status !== 'RUNNING' || now < run.next_at!) {
+      return;
+    }
     const recovering = run.pending !== null;
     if (recovering && !reconcile) {
       await finish(tx, run, now, 'COMMIT_UNKNOWN');
@@ -174,7 +183,9 @@ export async function resume(
       }
     };
   });
-  if (!lease || !step) return;
+  if (!lease || !step) {
+    return;
+  }
   let outcome: Outcome;
   try {
     outcome = await (lease.recovering ? reconcile! : step)(lease.work);
@@ -190,15 +201,20 @@ export async function resume(
     const now = clock();
     const run = await tx.get<Run>(CONTROL);
     if (!run || run.run_status !== 'RUNNING' ||
-        run.pending !== lease.work.operation_id)
+        run.pending !== lease.work.operation_id) {
       return;
+    }
     run.pending = null;
     if (outcome?.kind === 'progress' &&
         Number.isSafeInteger(outcome.checkpoint) &&
         outcome.checkpoint > run.checkpoint) {
       run.checkpoint = outcome.checkpoint;
-      if (outcome.stage) run.stage = outcome.stage;
-      if (outcome.cursor !== undefined) run.cursor = outcome.cursor;
+      if (outcome.stage) {
+        run.stage = outcome.stage;
+      }
+      if (outcome.cursor !== undefined) {
+        run.cursor = outcome.cursor;
+      }
       run.data_quality = 'PARTIAL';
       run.error = null;
       run.next_at = now;
