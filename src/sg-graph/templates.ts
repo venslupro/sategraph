@@ -58,8 +58,9 @@ const dto = (p: string) => '{ids:[n IN nodes(' + p +
 
 /** 只有方向枚举和校验后的整数选择模板；语义谓词均在重复路径模式内。 */
 export function analysisTemplate(op: Analysis, p: Policy) {
-  if (!Number.isInteger(p.hops) || p.hops < 1 || p.hops > 12)
+  if (!Number.isInteger(p.hops) || p.hops < 1 || p.hops > 12) {
     throw Error('INVALID_HOPS');
+  }
   const rel = step('r', p.direction === 'IN');
   const pre = 'WITH s,a,b,gate WHERE gate=\'READY\' ';
   const repeat = '( (x:Entity)' + rel + '(y:Entity WHERE ' + node('y') +

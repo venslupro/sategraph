@@ -21,22 +21,28 @@ const isShort = (s: unknown, n: number): s is string =>
 function input(o: Obj) {
   keys(o, ['message', 'history', 'context', 'context_revision']);
   if (!isShort(o.message, 2000) || !Number.isSafeInteger(o.context_revision) ||
-      Number(o.context_revision) < 0)
+      Number(o.context_revision) < 0) {
     throw new ReadError('INVALID_QUERY');
+  }
   const context = o.context ?? {};
-  if (!isObj(context)) throw new ReadError('INVALID_QUERY');
+  if (!isObj(context)) {
+    throw new ReadError('INVALID_QUERY');
+  }
   keys(context, [
     'entity_id', 'from', 'to', 'scenario_id', 'analysis_time',
     'orbit_manifest_id', 'model_version', 'purpose'
   ]);
-  if (!Object.values(context).every(id)) throw new ReadError('INVALID_QUERY');
+  if (!Object.values(context).every(id)) {
+    throw new ReadError('INVALID_QUERY');
+  }
   const history = o.history ?? [];
   if (!Array.isArray(history) || history.length > 6 ||
       !history.every(
           h => isObj(h) && Object.keys(h).length === 2 &&
               (h.role === 'user' || h.role === 'assistant') &&
-              isShort(h.text, 600)))
+              isShort(h.text, 600))) {
     throw new ReadError('INVALID_HISTORY');
+  }
   return {
     message: o.message,
     history,
@@ -59,7 +65,9 @@ function bounded<T>(signal: AbortSignal, start: () => Promise<T>): Promise<T> {
   });
 }
 function decision(raw: unknown): Obj {
-  if (!isObj(raw)) throw new ReadError('MODEL_INVALID', 502);
+  if (!isObj(raw)) {
+    throw new ReadError('MODEL_INVALID', 502);
+  }
   let data = raw.response;
   if (typeof data === 'string' && data.length <= 8192) {
     try {
@@ -68,8 +76,9 @@ function decision(raw: unknown): Obj {
       throw new ReadError('MODEL_INVALID', 502);
     }
   }
-  if (!isObj(data) || Object.keys(data).length !== 1)
+  if (!isObj(data) || Object.keys(data).length !== 1) {
     throw new ReadError('MODEL_INVALID', 502);
+  }
   return data;
 }
 type Event = {
@@ -80,19 +89,26 @@ export async function assistantRequest(
     req: Request, env: Env, deadline = 25000): Promise<Response> {
   try {
     const url = new URL(req.url);
-    if (url.pathname !== '/api/v1/assistant/query' || url.search)
+    if (url.pathname !== '/api/v1/assistant/query' || url.search) {
       throw new ReadError('NOT_FOUND', 404);
-    if (req.method !== 'POST') throw new ReadError('METHOD_NOT_ALLOWED', 405);
+    }
+    if (req.method !== 'POST') {
+      throw new ReadError('METHOD_NOT_ALLOWED', 405);
+    }
     const args = input(await requestObject(req, 16384));
     const ai = env.AI;
-    if (!ai || env.APPROVED_MODEL !== MODEL)
+    if (!ai || env.APPROVED_MODEL !== MODEL) {
       throw new ReadError('MODEL_UNAVAILABLE', 503);
-    const cancel = new AbortController(), timer = AbortSignal.timeout(deadline);
+    }
+    const cancel = new AbortController();
+    const timer = AbortSignal.timeout(deadline);
     const signal = AbortSignal.any([req.signal, cancel.signal, timer]);
     const requestId = crypto.randomUUID();
     let seq = 0;
     const run = async (emit: (e: Event) => void) => {
-      let modelCalls = 0, toolCalls = 0, bytes = 0;
+      let modelCalls = 0;
+      let toolCalls = 0;
+      let bytes = 0;
       const results: {ref: number; tool: string; data: Obj}[] = [];
       const event = (name: string, data: Obj) => emit({
         event: name,
@@ -114,8 +130,9 @@ export async function assistantRequest(
             history: args.history,
             results
           });
-          if (enc.encode(content).length > 24000)
+          if (enc.encode(content).length > 24000) {
             throw new ReadError('LIMIT_REACHED', 429);
+          }
           event('step_started', {kind: 'model', step: ++modelCalls});
           const raw = await bounded(signal, () => ai.run(MODEL, {
             messages:
@@ -134,8 +151,9 @@ export async function assistantRequest(
             if (!d.finish.length || d.finish.length > 8 ||
                 !d.finish.every(
                     n => Number.isSafeInteger(n) && n >= 1 &&
-                        n <= results.length))
+                        n <= results.length)) {
               throw new ReadError('INVALID_REFERENCE', 502);
+            }
             const refs = [...new Set<number>(d.finish)];
             event('text_delta', {
               text: '查询依据：' +
@@ -147,16 +165,19 @@ export async function assistantRequest(
               const {data, tool} = results[n - 1]!;
               if (tool === 'find_path' && data.status === 'FOUND' &&
                   data.query_execution_complete === true &&
-                  data.context_revision === args.revision && id(data.result_id))
+                  data.context_revision === args.revision &&
+                  id(data.result_id)) {
                 event(
                     'view_action',
                     {action: 'show_path', ref: n, result_id: data.result_id});
-              if (tool === 'get_entity' && id(data.entity_id))
+              }
+              if (tool === 'get_entity' && id(data.entity_id)) {
                 event('view_action', {
                   action: 'select_entity',
                   ref: n,
                   entity_id: data.entity_id
                 });
+              }
             }
             finish('COMPLETED');
             return;
@@ -164,10 +185,12 @@ export async function assistantRequest(
           if (!Array.isArray(d.calls) || !d.calls.length ||
               !d.calls.every(
                   c => isObj(c) && Object.keys(c).length === 2 &&
-                      isShort(c.name, 40) && isObj(c.args)))
+                      isShort(c.name, 40) && isObj(c.args))) {
             throw new ReadError('MODEL_INVALID', 502);
-          if (toolCalls + d.calls.length > 8)
+          }
+          if (toolCalls + d.calls.length > 8) {
             throw new ReadError('LIMIT_REACHED', 429);
+          }
           for (const call of d.calls) {
             signal.throwIfAborted();
             event(
@@ -180,7 +203,9 @@ export async function assistantRequest(
                     call.args, args.revision, signal, args.context));
             signal.throwIfAborted();
             bytes += enc.encode(JSON.stringify(data)).length;
-            if (bytes > 20000) throw new ReadError('LIMIT_REACHED', 429);
+            if (bytes > 20000) {
+              throw new ReadError('LIMIT_REACHED', 429);
+            }
             const item = {ref: results.length + 1, tool: call.name, data};
             results.push(item);
             event('tool_result', item);
@@ -214,18 +239,22 @@ export async function assistantRequest(
       const body = new ReadableStream<Uint8Array>({
         start(controller) {
           void run(e => {
-            if (!closed)
+            if (!closed) {
               controller.enqueue(enc.encode(
                   'event: ' + e.event + '\ndata: ' + JSON.stringify(e) +
                   '\n\n'));
+            }
           })
               .then(
                   () => {
-                    if (!closed) controller.close();
+                    if (!closed) {
+                      controller.close();
+                    }
                   },
                   () => {
-                    if (!closed)
+                    if (!closed) {
                       controller.error(new Error('STREAM_INTERRUPTED'));
+                    }
                   });
         },
         cancel() {

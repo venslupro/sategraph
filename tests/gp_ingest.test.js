@@ -2,16 +2,17 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-import {activateWriter, applyOrbit} from '../src/sg-sync/storage/orbit_store.ts';
 import {archiveSource} from '../src/sg-sync/archive_step.ts';
 import {authorizeArchive} from '../src/sg-sync/b2_archive.ts';
 import {indexGp, readGpSpan, sha256} from '../src/sg-sync/gp_chunks.ts';
 import {advanceGp as dispatchGp, commitGpChunk, prepareGp} from '../src/sg-sync/gp_ingest.ts';
 import {fetchSnapshot} from '../src/sg-sync/source_snapshot.ts';
+import {activateWriter, applyOrbit} from '../src/sg-sync/storage/orbit_store.ts';
 
 import {setupProjection, writer} from './projector_fixture.js';
 
-const enc = new TextEncoder(), bucketId = 'b'.repeat(24);
+const enc = new TextEncoder();
+const bucketId = 'b'.repeat(24);
 const row = (id, extra = {}) => ({
   NORAD_CAT_ID: id,
   EPOCH: '2026-01-01T00:00:00.123456',
@@ -31,7 +32,9 @@ const count = (db, table) =>
     db.prepare('SELECT count(*) AS n FROM ' + table).first('n');
 async function database(t) {
   const {db} = await setupProjection(t);
-  for (const name of ['0003_source_archive.sql', '0004_gp_manifest.sql', '0005_catalog.sql']) {
+  for (const name
+           of ['0003_source_archive.sql', '0004_gp_manifest.sql',
+               '0005_catalog.sql']) {
     const sql = await readFile(
         new URL('../src/sg-sync/storage/migrations/' + name, import.meta.url),
         'utf8');
@@ -108,7 +111,8 @@ test(
 test(
     '205 行只有末块完成才报齐；并发重放和重启从持久断点续读，不重新下载整份文件',
     async t => {
-      const db = await database(t), f = await pin(db, writer, rows(205));
+      const db = await database(t);
+      const f = await pin(db, writer, rows(205));
       assert.deepEqual(
           await prepareGp(db, writer, f.read),
           {nextChunk: 0, processed: 0, total: 205, complete: false});
@@ -126,8 +130,9 @@ test(
       assert.deepEqual(await advanceGp(db, writer, 2, noRead), done);
       assert.deepEqual(await advanceGp(db, writer, 3, noRead), done);
       for (const table
-               of ['orbit_current', 'command_receipt', 'projection_outbox'])
+               of ['orbit_current', 'command_receipt', 'projection_outbox']) {
         assert.equal(await count(db, table), 205);
+      }
       assert.deepEqual(
           (await db
                .prepare(
@@ -144,15 +149,16 @@ test(
 test(
     '尾行预检失败零业务写；分片损坏和 outbox 错误不推进断点，修复后可继续',
     async t => {
-      const db = await database(t),
-            a = await pin(
-                db, writer, [...rows(100), row(101, {ECCENTRICITY: 1})]);
+      const db = await database(t);
+      const a =
+          await pin(db, writer, [...rows(100), row(101, {ECCENTRICITY: 1})]);
       await assert.rejects(
           prepareGp(db, writer, a.read), /INVALID_GP_ELEMENTS/);
       for (const table
                of ['gp_manifest', 'gp_checkpoint', 'orbit_current',
-                   'projection_outbox'])
+                   'projection_outbox']) {
         assert.equal(await count(db, table), 0);
+      }
       const w = {runId: 'valid', epoch: writer.epoch + 1};
       await activateWriter(db, w);
       const f = await pin(db, w, rows(4));
@@ -167,15 +173,17 @@ test(
           .run();
       await assert.rejects(advanceGp(db, w, 0, f.read), /outbox_fault/);
       for (const table
-               of ['command_receipt', 'orbit_current', 'projection_outbox'])
+               of ['command_receipt', 'orbit_current', 'projection_outbox']) {
         assert.equal(await count(db, table), 0);
+      }
       assert.equal((await prepareGp(db, w, noRead)).processed, 0);
       await db.prepare('DROP TRIGGER fault').run();
       assert.equal((await advanceGp(db, w, 0, f.read)).processed, 4);
     });
 
 test('新快照只投影真实轨道变化；等值写法、旧历元和一次缺失均不改原事实', async t => {
-  const db = await database(t), f = await pin(db, writer, rows(4));
+  const db = await database(t);
+  const f = await pin(db, writer, rows(4));
   await prepareGp(db, writer, f.read);
   await advanceGp(db, writer, 0, f.read);
   const w = {runId: 'second', epoch: 2};
@@ -210,7 +218,8 @@ test('新快照只投影真实轨道变化；等值写法、旧历元和一次�
 });
 
 test('跨来源冲突和读取期间的写者接管不允许整块写入', async t => {
-  const db = await database(t), f = await pin(db, writer, rows(2));
+  const db = await database(t);
+  const f = await pin(db, writer, rows(2));
   await prepareGp(db, writer, f.read);
   await applyOrbit(db, {
     writer,
@@ -240,7 +249,7 @@ async function downloadPort(
     handler, downloadUrl = 'https://f001.backblazeb2.com',
     capabilities = ['listFiles', 'writeFiles', 'readFiles']) {
   return authorizeArchive(bucketId, 'fixture', 'fixture', async (url, init) => {
-    if (url.endsWith('b2_authorize_account'))
+    if (url.endsWith('b2_authorize_account')) {
       return Response.json({
         authorizationToken: 'fixture',
         apiInfo: {
@@ -251,6 +260,7 @@ async function downloadPort(
           }
         }
       });
+    }
     return handler(url, init);
   });
 }
@@ -265,7 +275,9 @@ test(
         assert.equal(init.redirect, 'manual');
         assert.equal(init.headers['Accept-Encoding'], 'identity');
         const full = init.headers.Range === 'bytes=0-3';
-        if (!full) assert.equal(init.headers.Range, 'bytes=1-2');
+        if (!full) {
+          assert.equal(init.headers.Range, 'bytes=1-2');
+        }
         return new Response(full ? 'abcd' : 'bc', {
           status: full ? 200 : 206,
           headers: {
@@ -298,15 +310,17 @@ test(
     });
 
 test('错误下载域、错桶、缺读权限及越界读取均在发送令牌前拒绝', async () => {
-  const v = {bucketId, fileId: 'pinned', byteLength: 4},
-        good = await downloadPort(noRead);
+  const v = {bucketId, fileId: 'pinned', byteLength: 4};
+  const good = await downloadPort(noRead);
   await assert.rejects(
       good.readRange({...v, bucketId: 'elsewhere'}, 0, 4), /DOWNLOAD_SCOPE/);
-  for (const [start, end] of [[0, 0], [0, 5], [-1, 2], [0, 1.5]])
+  for (const [start, end] of [[0, 0], [0, 5], [-1, 2], [0, 1.5]]) {
     await assert.rejects(good.readRange(v, start, end), /INVALID_RANGE/);
-  const wrong = await downloadPort(noRead, 'https://invalid.example.test'),
-        noCap =
-            await downloadPort(noRead, undefined, ['listFiles', 'writeFiles']);
-  for (const p of [wrong, noCap])
+  }
+  const wrong = await downloadPort(noRead, 'https://invalid.example.test');
+  const noCap =
+      await downloadPort(noRead, undefined, ['listFiles', 'writeFiles']);
+  for (const p of [wrong, noCap]) {
     await assert.rejects(p.readRange(v, 0, 4), /DOWNLOAD_SCOPE/);
+  }
 });

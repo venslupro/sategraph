@@ -25,7 +25,9 @@ export async function probeGraph(
   });
   const opened = await request(
       endpoint, {statement: 'RETURN 1 AS probe', accessMode: 'Read'});
-  if (!opened.ok) throw new Error('QUERY_FAILED');
+  if (!opened.ok) {
+    throw new Error('QUERY_FAILED');
+  }
   const reply = await opened.json().catch(() => null) as GraphResponse | null;
   const id = reply?.transaction?.id;
   const affinity = opened.headers.get('neo4j-cluster-affinity');
@@ -40,7 +42,9 @@ export async function probeGraph(
   const committed = await request(endpoint + '/' + id + '/commit').catch(() => {
     throw new Error('COMMIT_UNKNOWN');
   });
-  if (!committed.ok) throw new Error('COMMIT_UNKNOWN');
+  if (!committed.ok) {
+    throw new Error('COMMIT_UNKNOWN');
+  }
   const result =
       await committed.json().catch(() => null) as GraphResponse | null;
   if (!result || result.transaction != null || hasErrors(result) ||

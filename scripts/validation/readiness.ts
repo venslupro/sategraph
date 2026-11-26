@@ -28,7 +28,9 @@ export async function inspectTarget(
     send: typeof fetch = fetch) {
   const keys = VARIABLES[target];
   const missing = keys.filter(key => !env[key]?.trim());
-  if (missing.length) return {target, status: 'BLOCKED', missing} as const;
+  if (missing.length) {
+    return {target, status: 'BLOCKED', missing} as const;
+  }
 
   let run: () => Promise<unknown>;
   if (target === 'neo4j') {
@@ -47,7 +49,9 @@ export async function inspectTarget(
     }
     run = () => probeObject(origin, token, bucket, file, send);
   }
-  if (!live) return {target, status: 'READY_OFFLINE'} as const;
+  if (!live) {
+    return {target, status: 'READY_OFFLINE'} as const;
+  }
   try {
     await run();
     return {target, status: 'CONFIRMED'} as const;

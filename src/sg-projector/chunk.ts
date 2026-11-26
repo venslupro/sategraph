@@ -41,13 +41,18 @@ export async function makeChunk(
   let size = 2;
   let cursor = base.cursor;
   for (const row of input) {
-    if (rows.length === MAX_ROWS || seen.has(row.entity_id)) break;
+    if (rows.length === MAX_ROWS || seen.has(row.entity_id)) {
+      break;
+    }
     if (!Number.isSafeInteger(row.event_seq) || row.event_seq <= cursor ||
-        !Number.isSafeInteger(row.revision) || row.revision < 1)
+        !Number.isSafeInteger(row.revision) || row.revision < 1) {
       throw new Error('INVALID_EVENT');
+    }
     const bytes = encoder.encode(JSON.stringify(row)).length + 1;
     if (bytes + size > MAX_BYTES) {
-      if (!rows.length) throw new Error('EVENT_TOO_LARGE');
+      if (!rows.length) {
+        throw new Error('EVENT_TOO_LARGE');
+      }
       break;
     }
     size += bytes;
@@ -55,7 +60,9 @@ export async function makeChunk(
     seen.add(row.entity_id);
     cursor = row.event_seq;
   }
-  if (!rows.length) return null;
+  if (!rows.length) {
+    return null;
+  }
   await Promise.all(rows.map(async row => {
     if (await digest(row.payload) !== row.payload_hash ||
         JSON.parse(row.payload).entity_id !== row.entity_id) {

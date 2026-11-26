@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {activateWriter} from '../src/sg-sync/storage/orbit_store.ts';
 import {advanceProjection} from '../src/sg-projector/advance.ts';
 import {graphPort} from '../src/sg-projector/graph.ts';
 import {snapshot} from '../src/sg-projector/journal.ts';
+import {activateWriter} from '../src/sg-sync/storage/orbit_store.ts';
 
 import {instance, setupProjection, writer} from './projector_fixture.js';
 
@@ -33,7 +33,9 @@ function graphFixture() {
     assert.equal(url, 'https://fixture.databases.neo4j.io/db/neo4j/query/v2');
     assert.equal(init.redirect, 'manual');
     const {accessMode, parameters: p} = JSON.parse(init.body);
-    if (accessMode === 'Read') return reply(current);
+    if (accessMode === 'Read') {
+      return reply(current);
+    }
     if (!p.rows) {
       claims++;
       assert.ok(p.positions.some(
@@ -46,9 +48,13 @@ function graphFixture() {
     assert.deepEqual(
         [p.runId, p.epoch, p.baseCursor, p.baseHash],
         [current.runId, current.epoch, current.cursor, current.hash]);
-    if (fault === 'before') throw Error('模拟未提交即断线');
+    if (fault === 'before') {
+      throw Error('模拟未提交即断线');
+    }
     current = {...current, cursor: p.endCursor, hash: p.endHash};
-    if (fault === 'after') throw Error('模拟提交后断线');
+    if (fault === 'after') {
+      throw Error('模拟提交后断线');
+    }
     return reply(current);
   };
   return {

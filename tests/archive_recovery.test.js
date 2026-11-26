@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-import {activateWriter} from '../src/sg-sync/storage/orbit_store.ts';
 import {archiveSource} from '../src/sg-sync/archive_step.ts';
 import {fetchSnapshot} from '../src/sg-sync/source_snapshot.ts';
+import {activateWriter} from '../src/sg-sync/storage/orbit_store.ts';
 
 import {setupProjection, writer} from './projector_fixture.js';
 

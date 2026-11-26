@@ -1,3 +1,5 @@
+import type {Position, PublicSatellite, Satellite} from './orbit_types.ts';
+
 export const EARTH_RADIUS = 6371;
 export const MU = 398600.4418;
 export const RAD = Math.PI / 180;
@@ -160,45 +162,76 @@ export const SOURCES = [
   }
 ];
 
-export function classifyName(name) {
+export function classifyName(name: string) {
   const n = String(name).toUpperCase();
-  if (/BEIDOU|BEI DOU|北斗/.test(n)) return 'bds';
-  if (/^GPS|NAVSTAR/.test(n)) return 'gps';
-  if (/GALILEO|^GSAT0/.test(n)) return 'gal';
-  if (/GLONASS/.test(n)) return 'glo';
-  if (/^STARLINK/.test(n)) return 'starlink';
-  if (/^IRIDIUM/.test(n)) return 'iridium';
-  if (/^ONEWEB/.test(n)) return 'oneweb';
-  if (/TDRS|TIANLIAN|天链/.test(n)) return 'relay';
-  if (/^ISS |^ISS$|TIANHE|CSS |^CSS$|HST|HUBBLE|天宫/.test(n))
+  if (/BEIDOU|BEI DOU|北斗/.test(n)) {
+    return 'bds';
+  }
+  if (/^GPS|NAVSTAR/.test(n)) {
+    return 'gps';
+  }
+  if (/GALILEO|^GSAT0/.test(n)) {
+    return 'gal';
+  }
+  if (/GLONASS/.test(n)) {
+    return 'glo';
+  }
+  if (/^STARLINK/.test(n)) {
+    return 'starlink';
+  }
+  if (/^IRIDIUM/.test(n)) {
+    return 'iridium';
+  }
+  if (/^ONEWEB/.test(n)) {
+    return 'oneweb';
+  }
+  if (/TDRS|TIANLIAN|天链/.test(n)) {
+    return 'relay';
+  }
+  if (/^ISS |^ISS$|TIANHE|CSS |^CSS$|HST|HUBBLE|天宫/.test(n)) {
     return 'station';
-  if (/SENTINEL|LANDSAT|FENGYUN|GAOFEN|YAOGAN|^NOAA|METOP|^GOES/.test(n))
+  }
+  if (/SENTINEL|LANDSAT|FENGYUN|GAOFEN|YAOGAN|^NOAA|METOP|^GOES/.test(n)) {
     return 'eo';
+  }
   return 'other';
 }
-export function parseEpoch(value) {
+export function parseEpoch(value: unknown) {
   const v = String(value || '');
   return Date.parse(/(?:Z|[+-]\d\d:\d\d)$/.test(v) ? v : v + 'Z');
 }
-export function normalizeOmm(rows) {
-  if (!Array.isArray(rows)) throw new Error('轨道数据必须是 JSON 数组');
+export function normalizeOmm(rows: unknown): PublicSatellite[] {
+  if (!Array.isArray(rows)) {
+    throw new Error('轨道数据必须是 JSON 数组');
+  }
   const seen = new Set();
-  const result = [];
-  for (const row of rows) {
-    if (!row || typeof row !== 'object') continue;
+  const result: PublicSatellite[] = [];
+  for (const entry of rows as unknown[]) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      continue;
+    }
+    const row = entry as Record<string, unknown>;
     const id = String(row.NORAD_CAT_ID ?? '');
     const epoch = parseEpoch(row.EPOCH);
-    const num = k => Number(row[k]);
-    if (!/^\d{1,9}$/.test(id) || seen.has(id) || !Number.isFinite(epoch))
+    const num = (k: string) => typeof row[k] === 'number' ||
+            (typeof row[k] === 'string' && row[k].trim()) ?
+        Number(row[k]) :
+        NaN;
+    if (!/^\d{1,9}$/.test(id) || seen.has(id) || !Number.isFinite(epoch)) {
       continue;
-    const motion = num('MEAN_MOTION'), ecc = num('ECCENTRICITY'),
-          inc = num('INCLINATION');
+    }
+    const motion = num('MEAN_MOTION');
+    const ecc = num('ECCENTRICITY');
+    const inc = num('INCLINATION');
     if (!(motion > 0 && motion < 20 && ecc >= 0 && ecc < 1 && inc >= 0 &&
-          inc <= 180))
+          inc <= 180)) {
       continue;
-    if (!['RA_OF_ASC_NODE', 'ARG_OF_PERICENTER', 'MEAN_ANOMALY'].every(
-            k => Number.isFinite(num(k))))
+    }
+    if (!['RA_OF_ASC_NODE', 'ARG_OF_PERICENTER', 'MEAN_ANOMALY', 'BSTAR',
+          'MEAN_MOTION_DOT', 'MEAN_MOTION_DDOT']
+             .every(k => Number.isFinite(num(k)))) {
       continue;
+    }
     seen.add(id);
     const name = String(row.OBJECT_NAME || '未命名对象 ' + id).slice(0, 160);
     const a = Math.cbrt(MU / ((motion * 2 * Math.PI / 86400) ** 2));
@@ -214,22 +247,39 @@ export function normalizeOmm(rows) {
       raan: num('RA_OF_ASC_NODE'),
       period: 1440 / motion,
       eccentricity: ecc,
-      omm: row,
+      omm: {
+        OBJECT_NAME: name,
+        OBJECT_ID: String(row.OBJECT_ID || ''),
+        NORAD_CAT_ID: id,
+        EPOCH: /[+-]\d\d:\d\d$/.test(String(row.EPOCH)) ?
+            new Date(epoch).toISOString() :
+            String(row.EPOCH),
+        MEAN_MOTION: motion,
+        ECCENTRICITY: ecc,
+        INCLINATION: inc,
+        RA_OF_ASC_NODE: num('RA_OF_ASC_NODE'),
+        ARG_OF_PERICENTER: num('ARG_OF_PERICENTER'),
+        MEAN_ANOMALY: num('MEAN_ANOMALY'),
+        BSTAR: num('BSTAR'),
+        MEAN_MOTION_DOT: num('MEAN_MOTION_DOT'),
+        MEAN_MOTION_DDOT: num('MEAN_MOTION_DDOT'),
+        ELEMENT_SET_NO: String(row.ELEMENT_SET_NO ?? '')
+      },
       demo: false
     });
   }
   return result;
 }
-export function demoCatalog() {
-  const sats = [];
-  const configs = [
+export function demoCatalog(): Satellite[] {
+  const sats: Omit<Satellite, 'period'|'eccentricity'>[] = [];
+  const configs: [string, number, number, number, number, number][] = [
     ['gps', 6, 4, 20180, 55, 360], ['bds', 3, 8, 21528, 55, 360],
     ['gal', 3, 8, 23222, 56, 360], ['glo', 3, 8, 19130, 64.8, 360],
     ['starlink', 8, 12, 550, 53, 360], ['iridium', 6, 11, 780, 86.4, 180],
     ['oneweb', 6, 6, 1200, 87.9, 180]
   ];
   for (const [group, planes, slots, alt, inc, spread] of configs) {
-    for (let p = 0; p < planes; p++)
+    for (let p = 0; p < planes; p++) {
       for (let s = 0; s < slots; s++) {
         sats.push({
           id: 'demo-' + group + '-' + p + '-' + s,
@@ -247,8 +297,9 @@ export function demoCatalog() {
           demo: true
         });
       }
+    }
   }
-  for (let i = 0; i < 3; i++)
+  for (let i = 0; i < 3; i++) {
     sats.push({
       id: 'demo-bds-geo-' + i,
       name: '北斗三号 GEO-' + (i + 1),
@@ -259,7 +310,8 @@ export function demoCatalog() {
       inc: 0,
       demo: true
     });
-  for (let i = 0; i < 6; i++)
+  }
+  for (let i = 0; i < 6; i++) {
     sats.push({
       id: 'demo-relay-' + i,
       name: (i < 3 ? 'TDRS' : '天链') + ' · 示例 ' + (i % 3 + 1),
@@ -270,22 +322,27 @@ export function demoCatalog() {
       inc: 0,
       demo: true
     });
-  const named = [
-    ['25544', 'ISS · 国际空间站', 'station', 420, 51.64, 120, 30, '1998-067A'],
-    [
-      '48274', '天宫空间站 · 天和核心舱', 'station', 385, 41.47, 250, 200,
-      '2021-035A'
-    ],
-    [
-      '20580', 'Hubble · 哈勃望远镜', 'station', 520, 28.47, 40, 300,
-      '1990-037B'
-    ],
-    ['40697', 'Sentinel-2A', 'eo', 786, 98.57, 300, 0, '2015-028A'],
-    ['42063', 'Sentinel-2B', 'eo', 786, 98.57, 300, 180, '2017-013A'],
-    ['39084', 'Landsat 8', 'eo', 705, 98.2, 290, 90, '2013-008A'],
-    ['49260', 'Landsat 9', 'eo', 705, 98.2, 290, 270, '2021-088A']
-  ];
-  for (const [norad, name, group, alt, inc, raan, u0, cospar] of named)
+  }
+  const named:
+      [string, string, string, number, number, number, number, string][] = [
+        [
+          '25544', 'ISS · 国际空间站', 'station', 420, 51.64, 120, 30,
+          '1998-067A'
+        ],
+        [
+          '48274', '天宫空间站 · 天和核心舱', 'station', 385, 41.47, 250, 200,
+          '2021-035A'
+        ],
+        [
+          '20580', 'Hubble · 哈勃望远镜', 'station', 520, 28.47, 40, 300,
+          '1990-037B'
+        ],
+        ['40697', 'Sentinel-2A', 'eo', 786, 98.57, 300, 0, '2015-028A'],
+        ['42063', 'Sentinel-2B', 'eo', 786, 98.57, 300, 180, '2017-013A'],
+        ['39084', 'Landsat 8', 'eo', 705, 98.2, 290, 90, '2013-008A'],
+        ['49260', 'Landsat 9', 'eo', 705, 98.2, 290, 270, '2021-088A']
+      ];
+  for (const [norad, name, group, alt, inc, raan, u0, cospar] of named) {
     sats.push({
       id: norad,
       norad,
@@ -298,6 +355,7 @@ export function demoCatalog() {
       cospar,
       demo: true
     });
+  }
   return sats.map(
       s => ({
         ...s,
@@ -305,19 +363,20 @@ export function demoCatalog() {
         eccentricity: 0
       }));
 }
-export function circularPosition(s, ms) {
+export function circularPosition(s: Satellite, ms: number): Position {
   const t = (ms - Date.UTC(2026, 0, 1)) / 1000;
   const gmst = ((280.46061837 +
                  360.98564736629 * (ms / 86400000 + 2440587.5 - 2451545)) %
                 360) *
       RAD;
   let u;
-  if (s.kind === 'geo') {
+  if (s.kind === 'geo' && s.longitude !== undefined) {
     u = [Math.cos(s.longitude * RAD), Math.sin(s.longitude * RAD), 0];
   } else {
     const phase =
         (s.u0 || 0) * RAD + Math.sqrt(MU / (EARTH_RADIUS + s.alt) ** 3) * t;
-    const a = (s.raan || 0) * RAD, i = s.inc * RAD;
+    const a = (s.raan || 0) * RAD;
+    const i = s.inc * RAD;
     const x = Math.cos(a) * Math.cos(phase) -
         Math.sin(a) * Math.sin(phase) * Math.cos(i);
     const y = Math.sin(a) * Math.cos(phase) +
@@ -336,20 +395,23 @@ export function circularPosition(s, ms) {
     speed: Math.sqrt(MU / (EARTH_RADIUS + s.alt))
   };
 }
-export function hasLineOfSight(a, b, margin = 0) {
-  const delta = b.map((v, i) => v - a[i]),
-        den = delta.reduce((n, v) => n + v * v, 0);
-  if (den === 0) return false;
+export function hasLineOfSight(a: number[], b: number[], margin = 0) {
+  const delta = b.map((v, i) => v - a[i]);
+  const den = delta.reduce((n, v) => n + v * v, 0);
+  if (den === 0) {
+    return false;
+  }
   const t = Math.max(
       0, Math.min(1, -a.reduce((n, v, i) => n + v * delta[i], 0) / den));
   return a.reduce((n, v, i) => n + (v + t * delta[i]) ** 2, 0) >
       (EARTH_RADIUS + margin) ** 2;
 }
-export function relatedSatellites(selected, catalog, limit = 16) {
+export function relatedSatellites(
+    selected: Satellite, catalog: Satellite[], limit = 16) {
   const launch = selected.cospar?.split(/(?<=[0-9])(?=[A-Z])/)[0];
   return catalog.filter(s => s.id !== selected.id && s.group === selected.group)
       .sort((a, b) => {
-        const rank = s =>
+        const rank = (s: Satellite) =>
             (launch && s.cospar?.startsWith(launch) ? -10000 : 0) +
             Math.abs((s.raan || 0) - (selected.raan || 0)) +
             Math.abs(s.inc - selected.inc) * 3;
@@ -357,31 +419,42 @@ export function relatedSatellites(selected, catalog, limit = 16) {
       })
       .slice(0, limit);
 }
-export function neighborIds(s, catalog) {
-  if (s.plane === undefined) return [];
+export function neighborIds(s: Satellite, catalog: Satellite[]) {
+  if (s.plane === undefined || s.slot === undefined || s.slots === undefined) {
+    return [];
+  }
   const result = [];
   for (const t of catalog) {
-    if (t.group !== s.group || t.plane === undefined || t.id === s.id) continue;
+    if (t.group !== s.group || t.plane === undefined || t.slot === undefined ||
+        t.id === s.id) {
+      continue;
+    }
     const along = t.plane === s.plane &&
         (Math.abs(t.slot - s.slot) === 1 ||
          Math.abs(t.slot - s.slot) === s.slots - 1);
     const across = t.slot === s.slot && Math.abs(t.plane - s.plane) === 1;
-    if (along || across) result.push(t.id);
+    if (along || across) {
+      result.push(t.id);
+    }
   }
   return result;
 }
-export function orbitLabel(s) {
-  if (s.kind === 'geo' || s.alt > 34000 && s.alt < 37000 && s.inc < 3)
+export function orbitLabel(s: Satellite) {
+  if (s.kind === 'geo' || s.alt > 34000 && s.alt < 37000 && s.inc < 3) {
     return 'GEO · 地球静止轨道附近';
-  if (s.alt < 2000)
+  }
+  if (s.alt < 2000) {
     return s.inc > 96 && s.inc < 101 ? 'LEO · 近极地轨道' : 'LEO · 近地轨道';
-  if (s.alt < 35786) return 'MEO · 中地球轨道';
+  }
+  if (s.alt < 35786) {
+    return 'MEO · 中地球轨道';
+  }
   return '高轨道 / 其他';
 }
-export function displayRadius(alt) {
+export function displayRadius(alt: number) {
   return 1 + 0.9 * Math.sqrt(Math.max(0, alt) / 35786);
 }
-export function searchCatalog(catalog, query) {
+export function searchCatalog(catalog: Satellite[], query: string) {
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   return catalog.filter(
       s => terms.every(

@@ -109,15 +109,17 @@ test(
           'FOUND');
       for (const args
                of [{exclude_nodes: ['T-E']}, {exclude_edges: ['T-A:T-E']},
-                   {max_hops: 1}, {evidence_types: ['MODELED']}])
+                   {max_hops: 1}, {evidence_types: ['MODELED']}]) {
         assert.equal((await run(args, good.items)).status, 'GRAPH_INCOMPLETE');
+      }
       const direct = edge('T-A', 'T-B');
       for (const broken
                of [{...direct, to: 'T-X'}, {...direct, evidence: []},
-                   {...direct, id: ''}])
+                   {...direct, id: ''}]) {
         assert.equal(
             (await run({}, [{ids: ['T-A', 'T-B'], edges: [broken]}])).status,
             'GRAPH_INCOMPLETE');
+      }
     });
 
 test('不完整图响应、超时、数据不足与场景状态不能变成无路径', async () => {
@@ -157,16 +159,19 @@ test('歧义枚举、日期、任意语句与超限跳数在发送查询前拒�
   for (const args
            of [{direction: ['IN']}, {cypher: '自由文本'},
                {analysis_time: '2026-02-30T12:00:00Z'}, {max_hops: 13},
-               {max_hops: '2'}, {exclude_nodes: ['T-A']}, {evidence_types: []}])
+               {max_hops: '2'}, {exclude_nodes: ['T-A']},
+               {evidence_types: []}]) {
     assert.equal(
         (await graphRequest(post({...input, ...args}), env, none)).status, 422);
+  }
   for (const path
            of ['/api/v1/scenarios?limit=1e1',
                '/api/v1/graph/relations?root=T-A&analysis_time=tomorrow',
-               '/api/v1/scenarios?limit=1&limit=2'])
+               '/api/v1/scenarios?limit=1&limit=2']) {
     assert.equal(
         (await graphRequest(new Request(origin + path), env, none)).status,
         422);
+  }
   assert.equal(n, 0);
 });
 
@@ -233,16 +238,19 @@ test('场景列出实际状态，信息关系必须有匹配端点、类型与�
       (await list(path, [{...relation, internal_payload: 'hidden'}])).items,
       [relation]);
   for (const changes
-           of [{type: 'COMM_LINK'}, {from: 'T-B'}, {evidence_refs: []}])
+           of [{type: 'COMM_LINK'}, {from: 'T-B'}, {evidence_refs: []}]) {
     assert.equal(
         (await list(path, [{...relation, ...changes}])).status,
         'GRAPH_INCOMPLETE');
+  }
 });
 
 test('邻居、交集与度数拒绝截断或不符合约束的集合', async () => {
   const run = async (op, args, items) => {
     const body = {...input, ...args};
-    if (op !== 'common-neighbors') delete body.to;
+    if (op !== 'common-neighbors') {
+      delete body.to;
+    }
     return (await graphRequest(
                 post(body, op), env, reply(wrap({...good, items}))))
         .json();

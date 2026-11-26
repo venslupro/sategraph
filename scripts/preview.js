@@ -5,8 +5,9 @@ import {tmpdir} from 'node:os';
 import {buildPages} from './build_pages.js';
 
 const port = Number(process.env.PORT ?? 8765);
-if (!Number.isInteger(port) || port < 0 || port > 65535)
+if (!Number.isInteger(port) || port < 0 || port > 65535) {
   throw new Error('端口无效');
+}
 const directory = await buildPages(tmpdir());
 const runtime = new Miniflare({
   host: '127.0.0.1',

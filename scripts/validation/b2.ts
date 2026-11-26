@@ -18,7 +18,9 @@ export async function probeObject(
     headers: {authorization: token, 'content-type': 'application/json'},
     body: JSON.stringify({fileId}),
   });
-  if (!response.ok) throw new Error('OBJECT_READ_FAILED');
+  if (!response.ok) {
+    throw new Error('OBJECT_READ_FAILED');
+  }
   const item = await response.json() as {
     bucketId?: string;
     fileId?: string;

@@ -21,14 +21,16 @@ function listItem(
         row[direction === 'IN' ? 'to' : 'from'] !== root ||
         !infoTypes.includes(String(row.type)) || typeof row.type !== 'string' ||
         (type && row.type !== type) || !Array.isArray(row.evidence_refs) ||
-        !row.evidence_refs.length || !row.evidence_refs.every(id))
+        !row.evidence_refs.length || !row.evidence_refs.every(id)) {
       throw bad();
+    }
     const {edge_id, type: relationType, from, to, evidence_refs} = row;
     return {edge_id, type: relationType, from, to, evidence_refs};
   }
   if (kind === 'system' || kind === 'members') {
-    if (row.display_name != null && typeof row.display_name !== 'string')
+    if (row.display_name != null && typeof row.display_name !== 'string') {
       throw bad();
+    }
     return row.display_name == null ?
         {entity_id: row.entity_id} :
         {entity_id: row.entity_id, display_name: row.display_name};
@@ -53,8 +55,9 @@ function listItem(
         !Array.isArray(purposes) || !purposes.length || !purposes.every(id) ||
         (analysis_ms == null &&
          !(typeof valid_from_ms === 'number' &&
-           typeof valid_to_ms === 'number' && valid_from_ms < valid_to_ms)))))
+           typeof valid_to_ms === 'number' && valid_from_ms < valid_to_ms))))) {
     throw bad();
+  }
   return {
     scenario_id,
     state,
@@ -74,14 +77,18 @@ function listItem(
 
 function pathResult(items: Obj[], p: Policy) {
   const bad = () => new ReadError('GRAPH_INCOMPLETE', 503);
-  if (!items.length && p.from !== p.to) return {status: 'NO_PATH_OBSERVED'};
-  const ids = items[0]?.ids, raw = items[0]?.edges;
+  if (!items.length && p.from !== p.to) {
+    return {status: 'NO_PATH_OBSERVED'};
+  }
+  const ids = items[0]?.ids;
+  const raw = items[0]?.edges;
   if (items.length !== 1 || !Array.isArray(ids) || !ids.every(id) ||
       ids[0] !== p.from || ids.at(-1) !== p.to ||
       new Set(ids).size !== ids.length ||
       ids.some(n => p.exclude.includes(n)) || !Array.isArray(raw) ||
-      raw.length !== ids.length - 1 || raw.length > p.hops)
+      raw.length !== ids.length - 1 || raw.length > p.hops) {
     throw bad();
+  }
   const seen = new Set<string>();
   const edges = raw.map((e: unknown, i: number) => {
     if (!isObj(e) || !id(e.id) || seen.has(e.id) ||
@@ -90,8 +97,9 @@ function pathResult(items: Obj[], p: Policy) {
         e.to !== ids[p.direction === 'OUT' ? i + 1 : i] ||
         typeof e.evidence_type !== 'string' ||
         !p.evidence.includes(e.evidence_type) || !Array.isArray(e.evidence) ||
-        !e.evidence.length || !e.evidence.every(id))
+        !e.evidence.length || !e.evidence.every(id)) {
       throw bad();
+    }
     seen.add(e.id);
     return {
       id: e.id,
@@ -117,8 +125,9 @@ async function query(
     send: typeof fetch) {
   if (!validGraphTarget(env.GRAPH_ORIGIN, env.GRAPH_DATABASE) ||
       !id(env.GRAPH_INSTANCE) ||
-      !/^Basic [A-Za-z0-9+/]+=*$/.test(env.GRAPH_READ_AUTH))
+      !/^Basic [A-Za-z0-9+/]+=*$/.test(env.GRAPH_READ_AUTH)) {
     throw new ReadError('GRAPH_UNAVAILABLE', 503);
+  }
   const signal = AbortSignal.any([abort, AbortSignal.timeout(6000)]);
   const incomplete = () => new ReadError('GRAPH_INCOMPLETE', 503);
   try {
@@ -165,31 +174,35 @@ async function query(
       if (isObj(b) && Array.isArray(b.errors) &&
           b.errors.some(
               e => isObj(e) && typeof e.code === 'string' &&
-                  /TimedOut|Timeout/.test(e.code)))
+                  /TimedOut|Timeout/.test(e.code))) {
         throw new ReadError('TIMEOUT', 504);
+      }
       throw incomplete();
     }
     const row = b.data.values[0];
     if (!Array.isArray(row) || row.length !== 1 || !isObj(row[0]) ||
         !Array.isArray(row[0].items) || !Number.isSafeInteger(row[0].cursor) ||
-        Number(row[0].cursor) < 0 || !row[0].items.every(isObj))
+        Number(row[0].cursor) < 0 || !row[0].items.every(isObj)) {
       throw incomplete();
+    }
     return {
       gate: row[0].gate,
       items: row[0].items as Obj[],
       cursor: Number(row[0].cursor)
     };
   } catch (e) {
-    if (signal.aborted)
+    if (signal.aborted) {
       throw new ReadError(
           abort.aborted ? 'CANCELLED' : 'TIMEOUT', abort.aborted ? 499 : 504);
+    }
     throw e;
   }
 }
 
 export async function graphRequest(
     req: Request, env: GraphEnv, send: typeof fetch = fetch) {
-  const started = new Date().toISOString(), url = new URL(req.url);
+  const started = new Date().toISOString();
+  const url = new URL(req.url);
   const result = (data: Obj) => Response.json(
       {
         result_id: crypto.randomUUID(),
@@ -216,8 +229,12 @@ export async function graphRequest(
   try {
     const op = url.pathname.slice('/api/v1/analysis/'.length);
     if (url.pathname.startsWith('/api/v1/analysis/') && isAnalysis(op)) {
-      if (req.method !== 'POST') throw new ReadError('METHOD_NOT_ALLOWED', 405);
-      if (url.search) throw new ReadError('INVALID_QUERY');
+      if (req.method !== 'POST') {
+        throw new ReadError('METHOD_NOT_ALLOWED', 405);
+      }
+      if (url.search) {
+        throw new ReadError('INVALID_QUERY');
+      }
       const p = policy(op, await requestObject(req, 8192));
       const r = await query(
           env, analysisTemplate(op, p), {...p, now: Date.now()}, req.signal,
@@ -239,8 +256,9 @@ export async function graphRequest(
         if (typeof r.gate !== 'string' ||
             !['DATA_INSUFFICIENT', 'SCENARIO_NOT_READY', 'SCENARIO_EXPIRED',
               'LIMIT_REACHED']
-                 .includes(String(r.gate)))
+                 .includes(String(r.gate))) {
           throw new ReadError('GRAPH_INCOMPLETE', 503);
+        }
         return result(
             {...meta, status: r.gate, query_execution_complete: false});
       }
@@ -259,8 +277,10 @@ export async function graphRequest(
            !['edge_count', 'neighbor_count'].every(
                k => Number.isSafeInteger(r.items[0]?.[k]) &&
                    Number(r.items[0]?.[k]) >= 0) ||
-           Number(r.items[0]?.neighbor_count) > Number(r.items[0]?.edge_count)))
+           Number(r.items[0]?.neighbor_count) >
+               Number(r.items[0]?.edge_count))) {
         throw new ReadError('GRAPH_INCOMPLETE', 503);
+      }
       if (op !== 'degree' &&
           (r.items.length > 101 ||
            new Set(r.items.map(x => x.id)).size !== r.items.length ||
@@ -270,8 +290,9 @@ export async function graphRequest(
                    (op !== 'neighbors' ||
                     (Number.isSafeInteger(x.hops) && Number(x.hops) > 0 &&
                      Number(x.hops) <= p.hops &&
-                     (p.mode !== 'exact' || x.hops === p.hops))))))
+                     (p.mode !== 'exact' || x.hops === p.hops)))))) {
         throw new ReadError('GRAPH_INCOMPLETE', 503);
+      }
       return result({
         ...meta,
         status: r.items.length > 100 ? 'LIMIT_REACHED' : 'OK',
@@ -286,8 +307,9 @@ export async function graphRequest(
     const path = url.pathname.split('/');
     let kind: Listing;
     let root = '';
-    if (path.slice(0, 3).join('/') !== '/api/v1')
+    if (path.slice(0, 3).join('/') !== '/api/v1') {
       throw new ReadError('NOT_FOUND', 404);
+    }
     if (path[3] === 'scenarios' && (path.length === 4 || path.length === 5)) {
       kind = path.length === 4 ? 'scenarios' : 'scenario';
       root = decodeURIComponent(path[4] ?? '');
@@ -299,9 +321,12 @@ export async function graphRequest(
     } else if (url.pathname === '/api/v1/graph/relations') {
       kind = 'relations';
       root = url.searchParams.get('root') ?? '';
-    } else
+    } else {
       throw new ReadError('NOT_FOUND', 404);
-    if (req.method !== 'GET') throw new ReadError('METHOD_NOT_ALLOWED', 405);
+    }
+    if (req.method !== 'GET') {
+      throw new ReadError('METHOD_NOT_ALLOWED', 405);
+    }
     const params = Object.fromEntries(url.searchParams);
     const single = ['scenario', 'system'].includes(kind);
     keys(
@@ -313,25 +338,32 @@ export async function graphRequest(
             kind === 'members' ? ['after', 'limit', 'analysis_time'] :
                                  ['after', 'limit']);
     if ([...url.searchParams.keys()].some(
-            k => url.searchParams.getAll(k).length !== 1))
+            k => url.searchParams.getAll(k).length !== 1)) {
       throw new ReadError('INVALID_QUERY');
-    const limit = Number(params.limit ?? 25), after = params.after ?? '',
-          type = params.type ?? '', direction = params.direction ?? 'OUT';
+    }
+    const limit = Number(params.limit ?? 25);
+    const after = params.after ?? '';
+    const type = params.type ?? '';
+    const direction = params.direction ?? 'OUT';
     const at = params.analysis_time === undefined ?
         null :
         utcMillis(params.analysis_time);
-    if (params.limit !== undefined && !/^[1-9][0-9]{0,2}$/.test(params.limit))
+    if (params.limit !== undefined && !/^[1-9][0-9]{0,2}$/.test(params.limit)) {
       throw new ReadError('INVALID_QUERY');
+    }
     if (kind !== 'scenarios' && !id(root) || after !== '' && !id(after) ||
         !Number.isSafeInteger(limit) || limit < 1 || limit > 100 ||
         type && !infoTypes.includes(type) ||
         !['IN', 'OUT'].includes(direction) ||
-        at !== null && !Number.isFinite(at))
+        at !== null && !Number.isFinite(at)) {
       throw new ReadError('INVALID_QUERY');
+    }
     const r = await query(
         env, listTemplate(kind, direction === 'IN'),
         {root, after, type, at, take: limit + 1}, req.signal, send);
-    if (single && !r.items.length) throw new ReadError('NOT_FOUND', 404);
+    if (single && !r.items.length) {
+      throw new ReadError('NOT_FOUND', 404);
+    }
     const field = kind === 'relations'              ? 'edge_id' :
         kind === 'scenario' || kind === 'scenarios' ? 'scenario_id' :
                                                       'entity_id';
@@ -341,8 +373,9 @@ export async function graphRequest(
                 (single ? x[field] === root :
                           String(x[field]) >
                          (i ? String(r.items[i - 1]![field]) : after))) ||
-        single && r.items.length !== 1)
+        single && r.items.length !== 1) {
       throw new ReadError('GRAPH_INCOMPLETE', 503);
+    }
     const items = r.items.map(
         row => listItem(kind, row, root, direction, type, Date.parse(started)));
     return result({

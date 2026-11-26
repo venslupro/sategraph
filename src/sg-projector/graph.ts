@@ -42,7 +42,7 @@ interface ResponseBody {
   data?: {fields?: unknown; values?: unknown};
 }
 
-function parseProof(body: ResponseBody, instance: string): GraphProof {
+export function parseProof(body: ResponseBody, instance: string): GraphProof {
   const rows = body.data?.values;
   const fields = body.data?.fields;
   if (!Array.isArray(fields) ||
@@ -58,8 +58,9 @@ function parseProof(body: ResponseBody, instance: string): GraphProof {
       (epoch === 0 ? runId !== '' :
                      !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(runId)) ||
       !Number.isSafeInteger(cursor) || cursor < 0 || typeof hash !== 'string' ||
-      (cursor === 0 ? hash !== '' : !/^[a-f0-9]{64}$/.test(hash)))
+      (cursor === 0 ? hash !== '' : !/^[a-f0-9]{64}$/.test(hash))) {
     throw new Error('GRAPH_PROOF_INVALID');
+  }
   return {instance: id, runId, epoch, cursor, hash};
 }
 
@@ -69,8 +70,9 @@ export function graphPort(
     send: typeof fetch = fetch): GraphPort {
   if (!validGraphTarget(origin, database) ||
       !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(instance) ||
-      !/^Basic [A-Za-z0-9+/]+=*$/.test(auth))
+      !/^Basic [A-Za-z0-9+/]+=*$/.test(auth)) {
     throw new Error('INVALID_GRAPH_CONFIG');
+  }
   const endpoint = origin + '/db/' + database + '/query/v2';
   async function query(statement: string, parameters: object, writes: boolean):
       Promise<GraphProof> {
@@ -79,8 +81,9 @@ export function graphPort(
       parameters: {instance, ...parameters},
       accessMode: writes ? 'Write' : 'Read'
     });
-    if (new TextEncoder().encode(body).length > 256 * 1024)
+    if (new TextEncoder().encode(body).length > 256 * 1024) {
       throw new Error('CHUNK_TOO_LARGE');
+    }
     try {
       const res = await send(endpoint, {
         method: 'POST',
@@ -93,14 +96,17 @@ export function graphPort(
         },
         body
       });
-      if (!res.ok) throw new Error('GRAPH_HTTP_ERROR');
+      if (!res.ok) {
+        throw new Error('GRAPH_HTTP_ERROR');
+      }
       const data = await res.json() as ResponseBody;
       if (!data || data.transaction != null ||
           (data.errors !== undefined &&
            (!Array.isArray(data.errors) || data.errors.length)) ||
           !Array.isArray(data.bookmarks) || !data.bookmarks.length ||
-          !data.bookmarks.every(b => typeof b === 'string' && b.length > 0))
+          !data.bookmarks.every(b => typeof b === 'string' && b.length > 0)) {
         throw new Error('GRAPH_INCOMPLETE');
+      }
       return parseProof(data, instance);
     } catch {
       // 不把超时、空结果或拒绝误认成已提交；不回显服务端载荷或自动重试。
@@ -115,7 +121,9 @@ export function graphPort(
         {epoch: w.epoch, runId: w.runId, positions: end ? [base, end] : [base]},
         true),
     apply: (w, c) => {
-      if (c.instance !== instance) throw new Error('INSTANCE_MISMATCH');
+      if (c.instance !== instance) {
+        throw new Error('INSTANCE_MISMATCH');
+      }
       return query(
           APPLY, {
             epoch: w.epoch,
@@ -129,8 +137,9 @@ export function graphPort(
               if (payload.entity_id !== row.entity_id ||
                   ![payload.source_id, payload.evidence_id].every(
                       v => typeof v === 'string' &&
-                          /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v)))
+                          /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v))) {
                 throw new Error('INVALID_ORBIT_PROVENANCE');
+              }
               return {
                 ...row,
                 source_id: payload.source_id,

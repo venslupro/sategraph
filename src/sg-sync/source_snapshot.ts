@@ -22,12 +22,18 @@ async function hexDigest(algorithm: string, bytes: Uint8Array<ArrayBuffer>) {
 export async function fetchSnapshot(
     etag?: string, send: typeof fetch = fetch): Promise<RawSnapshot|null> {
   const headers = new Headers({accept: 'application/json'});
-  if (etag) headers.set('if-none-match', etag);
+  if (etag) {
+    headers.set('if-none-match', etag);
+  }
   const response = await send(
-      GP_URL, {headers, redirect: 'manual', signal: AbortSignal.timeout(30000)});
-  if (response.status === 304 && etag) return null;
-  if (response.status !== 200 || !response.body)
+      GP_URL,
+      {headers, redirect: 'manual', signal: AbortSignal.timeout(30000)});
+  if (response.status === 304 && etag) {
+    return null;
+  }
+  if (response.status !== 200 || !response.body) {
     throw new Error('SOURCE_UNAVAILABLE');
+  }
   if (Number(response.headers.get('content-length')) > MAX_INPUT_BYTES) {
     await response.body.cancel();
     throw new Error('SOURCE_TOO_LARGE');
@@ -38,7 +44,9 @@ export async function fetchSnapshot(
   try {
     while (true) {
       const {value, done} = await reader.read();
-      if (done) break;
+      if (done) {
+        break;
+      }
       size += value.length;
       if (size > MAX_INPUT_BYTES) {
         await reader.cancel();
@@ -58,15 +66,17 @@ export async function fetchSnapshot(
   parts.length = 0;
   const records: unknown = JSON.parse(
       new TextDecoder('utf-8', {fatal: true, ignoreBOM: false}).decode(bytes));
-  if (!Array.isArray(records) || !records.length)
+  if (!Array.isArray(records) || !records.length) {
     throw new Error('INVALID_GP_INPUT');
+  }
   const seen = new Set<string>();
   for (const row of records) {
     const id = String(row?.NORAD_CAT_ID ?? '');
     if (!/^[1-9][0-9]{0,8}$/.test(id) || seen.has(id) ||
         typeof row.EPOCH !== 'string' ||
-        !Number.isFinite(Date.parse(row.EPOCH)))
+        !Number.isFinite(Date.parse(row.EPOCH))) {
       throw new Error('INVALID_GP_INPUT');
+    }
     seen.add(id);
   }
   const [sha256, sha1] = await Promise.all(

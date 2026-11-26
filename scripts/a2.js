@@ -20,8 +20,8 @@ if (!valid) {
   if (checks.some(
           check => ['BLOCKED', 'INVALID_CONFIG'].includes(check.status))) {
     process.exitCode = 2;
-  } else if (checks.some(
-                 check => ['FAILED', 'UNKNOWN'].includes(check.status))) {
+  } else if (
+      checks.some(check => ['FAILED', 'UNKNOWN'].includes(check.status))) {
     process.exitCode = 1;
   }
 }

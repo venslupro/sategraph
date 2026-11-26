@@ -19,11 +19,15 @@ function encode(bytes: Uint8Array): string {
 }
 
 function decode(text: string): Uint8Array<ArrayBuffer> {
-  if (!/^[A-Za-z0-9_-]+$/.test(text)) throw new Error('INVALID_ENCODING');
+  if (!/^[A-Za-z0-9_-]+$/.test(text)) {
+    throw new Error('INVALID_ENCODING');
+  }
   const bytes = Uint8Array.from(
       atob(text.replaceAll('-', '+').replaceAll('_', '/')),
       c => c.charCodeAt(0));
-  if (encode(bytes) !== text) throw new Error('INVALID_ENCODING');
+  if (encode(bytes) !== text) {
+    throw new Error('INVALID_ENCODING');
+  }
   return bytes;
 }
 
@@ -35,8 +39,9 @@ function parseKeys(value: string): Keyring {
       throw new Error('INVALID_KEYRING');
     }
   }
-  if (keys.current.id === keys.previous?.id)
+  if (keys.current.id === keys.previous?.id) {
     throw new Error('DUPLICATE_KEY_ID');
+  }
   return keys;
 }
 
@@ -69,18 +74,25 @@ export async function validSession(
   const cookies = header.split(';')
                       .map(s => s.trim())
                       .filter(s => s.startsWith(COOKIE + '='));
-  if (cookies.length !== 1 || cookies[0]!.length > 1024) return false;
+  if (cookies.length !== 1 || cookies[0]!.length > 1024) {
+    return false;
+  }
   const parts = cookies[0]!.slice(COOKIE.length + 1).split('.');
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) {
+    return false;
+  }
   const [id, payload, sig] = parts as [string, string, string];
   const keys = parseKeys(keyring);
   const key = [keys.current, keys.previous].find(k => k?.id === id);
-  if (!key) return false;
+  if (!key) {
+    return false;
+  }
   try {
     if (!await crypto.subtle.verify(
             'HMAC', await importKey(key), decode(sig),
-            encoder.encode(id + '.' + payload)))
+            encoder.encode(id + '.' + payload))) {
       return false;
+    }
     const c = JSON.parse(new TextDecoder().decode(decode(payload)));
     const sec = Math.floor(now / 1000);
     return c.aud === host && c.purpose === 'catalog_read' &&

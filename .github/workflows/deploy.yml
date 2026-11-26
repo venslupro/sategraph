@@ -1,0 +1,114 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      initialize_empty_graph:
+        description: '仅首次启用：已核实目标是专用空图，允许创建控制节点'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: sategraph-production
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      PUBLIC_HOSTNAME: ${{ vars.PUBLIC_HOSTNAME }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: 核对生产分支
+        run: test "$GITHUB_REF" = refs/heads/main
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci && npm ci --prefix .github/deploy-tools
+      - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
+        with:
+          terraform_version: '1.13.5'
+          terraform_wrapper: false
+      - name: 只读导出并核对生产绑定
+        working-directory: infra/terraform
+        env:
+          EXISTING_SERVICES: ${{ vars.EXISTING_SERVICES }}
+          B2_STATE_BUCKET: ${{ vars.B2_STATE_BUCKET }}
+          B2_STATE_KEY: ${{ vars.B2_STATE_KEY }}
+          B2_STATE_REGION: ${{ vars.B2_STATE_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.B2_STATE_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_STATE_APP_KEY }}
+        run: |
+          bash init-b2.sh
+          terraform output -json bindings | node "$GITHUB_WORKSPACE/scripts/deploy/preflight.js" > "$RUNNER_TEMP/bindings.json"
+      - name: 生成生产 Worker 配置和静态文件
+        env:
+          GRAPH_INSTANCE: ${{ vars.GRAPH_INSTANCE }}
+        run: npm run config:workers < "$RUNNER_TEMP/bindings.json"
+      - name: 核对 Pages 生产分支
+        working-directory: dist/config/prd
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_API_TOKEN }}
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?缺少发布令牌}"
+          project=$(jq -er '.name' pages.json)
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$project" \
+            | jq -e --arg project "$project" '.success and .result.name == $project and .result.production_branch == "main"' >/dev/null
+      - name: 发布内部 Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_API_TOKEN }}
+        working-directory: dist/config/prd
+        run: |
+          wrangler="$GITHUB_WORKSPACE/.github/deploy-tools/node_modules/.bin/wrangler"
+          for worker in data graph projector assistant; do
+            "$wrangler" deploy --config "$worker.json"
+          done
+      - name: 应用 D1 迁移，读取来源登记及投影状态
+        working-directory: dist/config/prd
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_MIGRATION_API_TOKEN }}
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?缺少生产 D1 迁移令牌}"
+          wrangler="$GITHUB_WORKSPACE/.github/deploy-tools/node_modules/.bin/wrangler"
+          database=$(jq -er '.d1_databases[] | select(.binding == "CORE") | .database_name' sync.json)
+          "$wrangler" d1 migrations apply "$database" --remote --config sync.json
+          "$wrangler" d1 execute "$database" --remote --config sync.json --json \
+            --command "$(cat "$GITHUB_WORKSPACE/scripts/deploy/metadata.sql")" > "$RUNNER_TEMP/d1-metadata.json"
+      - name: 初始化并核验图元数据
+        env:
+          EXISTING_SERVICES: ${{ vars.EXISTING_SERVICES }}
+          GRAPH_INSTANCE: ${{ vars.GRAPH_INSTANCE }}
+          GRAPH_BOOTSTRAP_AUTH: ${{ secrets.GRAPH_BOOTSTRAP_AUTH }}
+          INITIALIZE_EMPTY_GRAPH: ${{ inputs.initialize_empty_graph }}
+        run: node scripts/deploy/metadata.js "$RUNNER_TEMP/bindings.json" "$RUNNER_TEMP/d1-metadata.json"
+      - name: 元数据就绪后发布调度、网关和 Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_API_TOKEN }}
+        working-directory: dist/config/prd
+        run: |
+          wrangler="$GITHUB_WORKSPACE/.github/deploy-tools/node_modules/.bin/wrangler"
+          "$wrangler" deploy --config sync.json
+          "$wrangler" deploy --config api-gateway.json
+          assets=$(jq -er '.pages_build_output_dir' pages.json)
+          project=$(jq -er '.name' pages.json)
+          "$wrangler" pages deploy "$assets" --project-name "$project" --branch main --commit-hash "$GITHUB_SHA"

@@ -1,9 +1,9 @@
 {
-  "name": "sg-sync", "main": "index.ts", "compatibility_date": "2026-07-01",
+  "name": "sategraph-prd-sync", "main": "index.ts", "compatibility_date": "2026-07-01",
   "workers_dev": false, "preview_urls": false,
   "observability": {"enabled": false},
   "triggers": {"crons": ["0 0 * * *"]},
-  "services": [{"binding": "PROJECTOR", "service": "sg-projector", "entrypoint": "ProjectionWriter"}, {"binding":"FACTS","service":"sg-data","entrypoint":"FactCommands"}],
+  "services": [{"binding": "PROJECTOR", "service": "sategraph-prd-projector", "entrypoint": "ProjectionWriter"}, {"binding":"FACTS","service":"sategraph-prd-data","entrypoint":"FactCommands"}],
   "durable_objects": {"bindings": [{"name": "COORDINATOR", "class_name": "UpdateCoordinator"}]},
   "migrations": [{"tag": "v1", "new_sqlite_classes": ["UpdateCoordinator"]}]
 }

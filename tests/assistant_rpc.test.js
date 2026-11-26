@@ -7,7 +7,7 @@ import ts from 'typescript';
 import {renderConfigs} from '../scripts/worker_configs.js';
 import {issueCookie} from '../src/sg-api-gateway/session.ts';
 import {MODEL} from '../src/sg-assistant/assistant.ts';
-import {workspace} from '../src/sg-pages/online_workspace.js';
+import {workspace} from '../src/sg-pages/online_workspace.ts';
 
 const root = new URL('../src/', import.meta.url);
 async function modules(paths) {
@@ -31,22 +31,23 @@ const links = (unit, selected) => Object.fromEntries(
 test(
     '临时 workerd：Pages 经鉴权进入命名助手，由目录读取临时 D1；不访问外部模型',
     async t => {
-      const host = 'sg.example.test', origin = 'https://' + host;
+      const host = 'sg.example.test';
+      const origin = 'https://' + host;
       const {'api-gateway': gateway, assistant, data} = await renderConfigs(
           {
-            environment: 'dev',
+            environment: 'prd',
             account_id: 'a'.repeat(32),
             public_hostname: host,
             turnstile_site_key: 'fixture',
             d1_database_id: '11111111-2222-3333-4444-555555555555',
-            d1_database_name: 'sategraph-dev-core',
+            d1_database_name: 'sategraph-prd-core',
             existing_services: {
               b2_bucket_id: 'b'.repeat(24),
               neo4j_origin: 'https://fixture.databases.neo4j.io',
               neo4j_database: 'neo4j'
             }
           },
-          'dist/config/dev', 'isolated');
+          'dist/config/prd', 'isolated');
       const keys = JSON.stringify({
         current: {id: 'test', secret: Buffer.alloc(32, 4).toString('base64url')}
       });
@@ -101,8 +102,8 @@ test(
         ]
       });
       t.after(() => mf.dispose());
-      const db = await mf.getD1Database('CORE', data.name),
-            dir = new URL('sg-sync/storage/migrations/', root);
+      const db = await mf.getD1Database('CORE', data.name);
+      const dir = new URL('sg-sync/storage/migrations/', root);
       for (const file of (await readdir(dir))
                .filter(f => f.endsWith('.sql'))
                .sort()) {
@@ -112,9 +113,9 @@ test(
                            .filter(Boolean)
                            .map(s => db.prepare(s)));
       }
-      const url = origin + '/api/v1/assistant/query',
-            headers = {origin, 'content-type': 'application/json'},
-            body = JSON.stringify({message: '目录统计', context_revision: 0});
+      const url = origin + '/api/v1/assistant/query';
+      const headers = {origin, 'content-type': 'application/json'};
+      const body = JSON.stringify({message: '目录统计', context_revision: 0});
       const direct = await (await mf.getWorker(assistant.name)).fetch(url);
       assert.equal(direct.status, 404, await direct.text());
       assert.equal(

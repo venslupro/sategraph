@@ -1,0 +1,95 @@
+name: Terraform
+
+on:
+  push:
+    branches: ['**']
+    paths: ['infra/terraform/**', '.github/workflows/terraform.yml']
+  pull_request:
+    paths: ['infra/terraform/**', '.github/workflows/terraform.yml']
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: '非 main 仅运行模拟计划；main 默认查看生产计划'
+        type: choice
+        options: [plan, apply]
+        default: plan
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: infra/terraform
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
+        with:
+          terraform_version: '1.13.5'
+          terraform_wrapper: false
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
+      - run: terraform test
+      - name: 核对 apply 请求的分支
+        if: inputs.operation == 'apply'
+        run: test "$GITHUB_REF" = refs/heads/main
+
+  production:
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    concurrency:
+      group: sategraph-production
+      cancel-in-progress: false
+    steps:
+      - name: 核对生产分支
+        working-directory: .
+        run: test "$GITHUB_REF" = refs/heads/main
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
+        with:
+          terraform_version: '1.13.5'
+          terraform_wrapper: false
+      - name: 初始化生产 B2 状态后端
+        env:
+          B2_STATE_BUCKET: ${{ vars.B2_STATE_BUCKET }}
+          B2_STATE_KEY: ${{ vars.B2_STATE_KEY }}
+          B2_STATE_REGION: ${{ vars.B2_STATE_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.B2_STATE_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_STATE_APP_KEY }}
+        run: bash init-b2.sh
+      - name: 生成生产计划
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.B2_STATE_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_STATE_APP_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
+          TF_VAR_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_public_hostname: ${{ vars.PUBLIC_HOSTNAME }}
+          TF_VAR_existing_services: ${{ vars.EXISTING_SERVICES }}
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?缺少 Terraform 令牌}"
+          terraform plan -var='environment=prd' -out="$RUNNER_TEMP/production.tfplan"
+      - name: 执行本次生成的计划
+        if: github.ref == 'refs/heads/main' && inputs.operation == 'apply'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.B2_STATE_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_STATE_APP_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
+        run: terraform apply "$RUNNER_TEMP/production.tfplan"
