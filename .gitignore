@@ -12,3 +12,6 @@
 .aider*
 CLAUDE.md
 AGENTS.md
+
+# Design and product documents (kept outside the repo)
+/docs/design/
