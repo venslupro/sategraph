@@ -59,17 +59,24 @@ Terraform 只管理本项目声明的 D1 与 Turnstile。既有私有 B2 桶、N
 
 **从旧命名切换：** 代码改名不会迁移线上数据。先对已有生产 state 运行 `plan` 并核对 D1 ID、备份和变更清单；若计划替换数据库，不要执行 `apply`，也不要移除 `prevent_destroy`。切流前核对 Turnstile 密钥、Worker 密钥和服务绑定、Durable Objects 状态及 Pages 域名，并协调新旧同步 Worker 的 Cron，避免同时写入。验证后再按批准的迁移方案停用旧资源。
 
+Cloudflare 部署只需在 GitHub 的 `production` 环境设置以下两项：
+
+| 类型 | 名称 | 用途 |
+| --- | --- | --- |
+| Secret | `CLOUDFLARE_API_TOKEN` | 使用 API Token，不用 Global API Key。令牌限目标账号，权限须覆盖发布 Workers 和 Pages、管理及迁移 D1、管理 Turnstile。Terraform 与 Deploy 共用此令牌，只在调用 Cloudflare 的步骤注入。 |
+| Variable | `CLOUDFLARE_ACCOUNT_ID` | 目标 Cloudflare 账户的 Account ID，用于选择账户，不用于鉴权；不要填域名的 Zone ID。 |
+
+完整发布还使用以下独立的生产配置；它们不是 Cloudflare 部署凭据：
+
 | `production` 配置 | 名称 | 用途 |
 | --- | --- | --- |
-| Variables | `CLOUDFLARE_ACCOUNT_ID`、`PUBLIC_HOSTNAME`、`GRAPH_INSTANCE` | 指定生产账号、公开域名和已核验的图实例。 |
+| Variables | `PUBLIC_HOSTNAME`、`GRAPH_INSTANCE` | 指定公开域名和已核验的图实例。 |
 | Variables | `EXISTING_SERVICES` | JSON 对象，键为 `b2_bucket_id`、`neo4j_origin`、`neo4j_database`；不含密码。Deploy 在生成发布配置前逐项核对这三个值与 Terraform state；缺失、无效或不一致即停止，不发布 Worker，也不执行 D1 迁移。 |
 | Variables | `B2_STATE_BUCKET`、`B2_STATE_KEY`、`B2_STATE_REGION` | state 桶的**名称**、state 对象键和桶的区域名（不是 URL）。区别于 `EXISTING_SERVICES` 中的业务归档桶 ID。 |
 | Secrets | `B2_STATE_KEY_ID`、`B2_STATE_APP_KEY` | 仅传给 Terraform 的 `init`、`plan`、`apply` 步骤，以及 Deploy 读取生产 state 的步骤。 |
-| Secrets | `CLOUDFLARE_TERRAFORM_API_TOKEN`、`CLOUDFLARE_DEPLOY_API_TOKEN` | 分开授权：前者管理 D1、Turnstile；后者读取目标 Pages 项目并发布 Workers、Pages。 |
-| Secrets | `CLOUDFLARE_D1_MIGRATION_API_TOKEN` | 允许在生产账号的目标 D1 执行迁移并读取初始化结果。 |
 | Secrets | `GRAPH_BOOTSTRAP_AUTH` | 专用 Neo4j Basic 授权头（含 `Basic ` 前缀）。需要读取目标图、建立唯一约束，并在首次授权时创建 GraphControl；不要复用运行时只读凭据。 |
 
-合计 7 个 Variables、6 个 Secrets。若只发布应用，Deploy 读取全部 7 个 Variables 和其中 5 个 Secrets：共用的 B2 密钥对、Cloudflare 发布令牌、D1 迁移令牌、图初始化凭据。不要另建 `AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY` 或 `TF_VAR_*`；工作流会自动映射。D1 ID 和 Turnstile 公开站点密钥来自 Terraform 输出，不需要手填。
+从旧配置切换时，先设置统一令牌并核对权限；新流程不再读取原先分开的 Terraform、发布和 D1 迁移令牌。不要另建 `AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY` 或 `TF_VAR_*`；工作流会自动映射。D1 ID 和 Turnstile 公开站点密钥来自 Terraform 输出，不需要手填。
 
 首次发布顺序：在 `main` 手动运行 Terraform `plan`，核对后运行 `apply`，再运行 Deploy。仅在首次启用已核实的专用空图、且 D1 无运行记录时勾选 `initialize_empty_graph`；以后重跑无需勾选。已有控制节点不会被重置。非空图缺少控制节点、实例或游标不匹配时停止发布，须先对账，不能用首次初始化代替恢复。
 
