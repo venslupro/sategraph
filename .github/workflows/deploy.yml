@@ -66,9 +66,9 @@ jobs:
       - name: 核对 Pages 生产分支
         working-directory: dist/config/prd
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          : "${CLOUDFLARE_API_TOKEN:?缺少发布令牌}"
+          : "${CLOUDFLARE_API_TOKEN:?缺少 production 环境的 CLOUDFLARE_API_TOKEN}"
           project=$(jq -er '.name' pages.json)
           curl --fail --silent --show-error \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
@@ -76,7 +76,7 @@ jobs:
             | jq -e --arg project "$project" '.success and .result.name == $project and .result.production_branch == "main"' >/dev/null
       - name: 发布内部 Worker
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: dist/config/prd
         run: |
           wrangler="$GITHUB_WORKSPACE/.github/deploy-tools/node_modules/.bin/wrangler"
@@ -86,9 +86,8 @@ jobs:
       - name: 应用 D1 迁移，读取来源登记及投影状态
         working-directory: dist/config/prd
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_MIGRATION_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          : "${CLOUDFLARE_API_TOKEN:?缺少生产 D1 迁移令牌}"
           wrangler="$GITHUB_WORKSPACE/.github/deploy-tools/node_modules/.bin/wrangler"
           database=$(jq -er '.d1_databases[] | select(.binding == "CORE") | .database_name' sync.json)
           "$wrangler" d1 migrations apply "$database" --remote --config sync.json
@@ -103,7 +102,7 @@ jobs:
         run: node scripts/deploy/metadata.js "$RUNNER_TEMP/bindings.json" "$RUNNER_TEMP/d1-metadata.json"
       - name: 元数据就绪后发布调度、网关和 Pages
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: dist/config/prd
         run: |
           wrangler="$GITHUB_WORKSPACE/.github/deploy-tools/node_modules/.bin/wrangler"
